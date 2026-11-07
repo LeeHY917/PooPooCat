@@ -97,7 +97,7 @@
           gain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + .2);
           osc.connect(gain); gain.connect(audioContext.destination);
           osc.start(); osc.stop(audioContext.currentTime + .21);
-          if (step % 4 === 3) {
+          if (step % 4 === 3 && !(scene === "play" && pushing)) {
             const plop = audioContext.createOscillator();
             const plopGain = audioContext.createGain();
             plop.type = "sine";
@@ -162,14 +162,23 @@
         box(-26, -18, 8, 5, "#e5e3d6"); box(18, -18, 8, 5, "#e5e3d6");
         // Tail and body
         box(18, 13, 14, 7, gold); box(27, 8, 7, 10, gold);
-        box(-21, -2, 42, 37, gold); box(-17, 26, 13, 8, shade); box(5, 26, 13, 8, shade);
-        box(-12, 5, 24, 23, "#fff8de"); box(-8, 11, 16, 13, "#fff");
+        if (tired) {
+          box(-15, -2, 30, 37, gold); box(-12, 27, 9, 8, shade); box(3, 27, 9, 8, shade);
+          box(-7, 6, 14, 24, "#fff8de");
+        } else {
+          box(-21, -2, 42, 37, gold); box(-17, 26, 13, 8, shade); box(5, 26, 13, 8, shade);
+          box(-12, 5, 24, 23, "#fff8de"); box(-8, 11, 16, 13, "#fff");
+        }
         // Head, ears, cheeks
         box(-24, -33, 48, 37, gold); box(-23, -40, 13, 13, gold); box(10, -40, 13, 13, gold);
         box(-19, -36, 7, 6, "#ff6b78"); box(12, -36, 7, 6, "#ff6b78");
         box(-17, -25, 5, 7, "#392f30"); box(12, -25, 5, 7, "#392f30");
         box(-14, -11, 4, 3, "#ef9588"); box(10, -11, 4, 3, "#ef9588");
         box(-3, -15, 6, 4, "#b97359"); box(-1, -11, 2, 4, "#6a493c");
+        if (pose === "frown") {
+          box(-18, -18, 7, 3, "#8c6738"); box(11, -18, 7, 3, "#8c6738");
+          box(-4, -8, 3, 3, "#392f30"); box(-1, -11, 3, 3, "#392f30"); box(2, -8, 3, 3, "#392f30");
+        }
         // Halo
         box(-11, -52, 22, 3, "#e0b83d"); box(-8, -56, 16, 3, "#ffe891");
         // Arms / expression
@@ -191,8 +200,9 @@
           box(-26, 14, 7, 5, "#fff1d2"); box(20, 14, 7, 5, "#fff1d2");
         }
         if (tired) {
-          box(-27, -30, 11, 3, "#7498c7"); box(15, -30, 11, 3, "#7498c7");
-          pixelText("z", 30, -42, 8, "#6d9cd6");
+          box(-19, -30, 12, 3, "#7498c7"); box(7, -30, 12, 3, "#7498c7");
+          box(18, -39, 5, 5, "#80b9e8"); box(22, -35, 3, 3, "#80b9e8");
+          pixelText("...", 30, -42, 8, "#6d9cd6");
         }
         ctx.restore();
       }
@@ -374,8 +384,24 @@
         const halfWidth = food.kind === "corn" ? .035 : food.kind === "dragon" ? .025 : 1 / 12;
         return { start: center - halfWidth, end: center + halfWidth };
       }
+      function drawGameTwoRoom(now) {
+        box(0, 0, W, H, "#dceef2");
+        for (let y = 0; y < 224; y += 32) for (let x = 0; x < W; x += 48) {
+          box(x, y, 46, 30, "#f9ffff", "#c5e0e8");
+          box(x + 2, y + 2, 42, 26, "#fff");
+        }
+        box(0, 260, W, 40, "#b8d8e2");
+        for (let x = 0; x < W; x += 48) box(x, 260, 46, 38, "#c8e3e9", "#a9cdd7");
+        // A close view of the closed toilet keeps this scene focused on the cat and meter.
+        box(170, 214, 140, 13, "#fff", "#9cbfc8");
+        box(184, 225, 112, 31, "#fff", "#9cbfc8");
+        box(194, 248, 92, 12, "#d9e8e9");
+        box(164, 207, 152, 11, "#eefbfc", "#91bfc9");
+        cat(239, 177, .78, false, "frown");
+        for (let i = 0; i < 5; i++) sparkle(164 + i * 36, 82 + (i % 2) * 32, "#fff", now / 190 + i, 4);
+      }
       function drawPlay(now) {
-        drawBathroom(now);
+        drawGameTwoRoom(now);
         box(0, 0, W, 35, "#fff9e6cc");
         pixelText("YOUR CHALLENGE", 240, 13, 7, "#8a704f");
         pixelText(`${food.name} · ${food.label}`, 240, 48, 8, "#69533b");
@@ -387,7 +413,7 @@
         }
         // Toilet water and the food-specific poop emerging from the top center
         box(197, 189, 86, 8, "#8bd5e6");
-        drawPoop(food.kind, 240, 39 + progress * 132, 1.35, Math.sin(now / 120) * (pushing ? 2 : 1));
+        drawPoop(food.kind, 322, 39 + progress * 132, 1.35, Math.sin(now / 120) * (pushing ? 2 : 1));
         drawMeter();
         pixelText(pushing ? "KEEP HOLDING!" : "HOLD, THEN RELEASE IN GREEN", 226, 231, 7, "#584638");
         button(buttons.push, pushing ? "PUSHING..." : "Push!", pushing);
@@ -419,7 +445,7 @@
         background("#dfeeff");
         box(0, 0, W, 250, "#e8f4ff");
         for (let i = 0; i < 7; i++) pixelText("〰", 70 + i * 57, 55 + Math.sin(now / 250 + i) * 9, 17, "#80a8da");
-        cat(240, 168, 1.25, true, "sit");
+        cat(240, 168, 1.25, true, "frown");
         pixelText("OOPS!", 240, 224, 11, "#6792c5");
         pixelText("Fail", 240, 253, 23, "#6587b0", "center", "#fff");
         pixelText(progress < meterZone().start ? "Not quite enough!" : "Too much oomph!", 240, 276, 9, "#6783a2");
@@ -480,6 +506,12 @@
       });
       canvas.addEventListener("pointerup", stopPush);
       canvas.addEventListener("pointercancel", stopPush);
+      window.addEventListener("pointerup", stopPush);
+      window.addEventListener("pointercancel", stopPush);
+      window.addEventListener("blur", stopPush);
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) stopPush();
+      });
       window.addEventListener("keydown", event => {
         if (event.code !== "Space" || event.repeat) return;
         event.preventDefault();
