@@ -143,7 +143,7 @@
         }
         ctx.restore();
       }
-      function drawFood(now) {
+      function drawFood(now, eating = false) {
         background("#fff0b5");
         box(0, 0, W, 40, "#f9df98");
         const fade = Math.max(0, 1 - (now - sceneStartedAt) / 1800);
@@ -155,13 +155,15 @@
         }
         // Table and seated angel cat
         box(0, 176, W, 17, "#b77e4c"); box(0, 193, W, 8, "#8b5a36"); box(34, 201, 15, 65, "#b77e4c"); box(430, 201, 15, 65, "#b77e4c");
-        box(171, 101, 138, 82, "#b78455"); box(177, 108, 126, 67, "#dfb67c"); cat(240, 131, .85, false, "sit");
+        box(171, 101, 138, 82, "#b78455"); box(177, 108, 126, 67, "#dfb67c");
+        cat(240, 131 + (eating ? Math.sin(now / 70) * 2 : 0), .85, false, eating ? "dance" : "sit");
         foodIcon("rice", 240, 181, .95);
         pixelText("Easy Mode", 240, 158, 9, "#6b542b");
+        pixelText("Rice / 米饭", 240, 170, 7, "#8b6849");
         const cards = [
-          { key: "corn", x: 48, en: "CORN", zh: "Sweet corn" },
-          { key: "beet", x: 160, en: "BEETROOT", zh: "Beetroot" },
-          { key: "dragon", x: 272, en: "DRAGON FRUIT", zh: "Dragon fruit" }
+          { key: "corn", x: 48, en: "CORN", zh: "玉米" },
+          { key: "beet", x: 160, en: "BEETROOT", zh: "红菜头" },
+          { key: "dragon", x: 272, en: "DRAGON FRUIT", zh: "火龙果" }
         ];
         cards.forEach((card, index) => {
           box(card.x, 206, 93, 67, "#ffedb9", "#d7a45e");
@@ -170,6 +172,14 @@
           pixelText(card.en, card.x + 46, 256, 7, "#965d31");
           pixelText(card.zh, card.x + 46, 266, 7, "#8b6849");
         });
+        if (eating) {
+          const elapsed = now - sceneStartedAt;
+          const t = Math.min(1, elapsed / 850);
+          const scale = Math.max(.08, .9 * (1 - t));
+          foodIcon(food.kind === "classic" ? "rice" : food.kind, 240, 173 - t * 38, scale);
+          pixelText("NOM NOM!", 240, 93, 10, "#9a652e");
+          for (let i = 0; i < 3; i++) pixelText("•", 222 + i * 18, 122 + (i % 2) * 8, 8, "#fff");
+        }
         box(383, 206, 83, 67, "#ffedb9", "#d7a45e");
         pixelText("CHOOSE A", 424, 225, 7, "#965d31"); pixelText("TREAT!", 424, 237, 9, "#965d31");
         pixelText("CLICK A DISH", 424, 258, 7, "#8b6849");
@@ -229,8 +239,8 @@
         const x = 414, y = 65, h = 168, w = 28;
         pixelText("PULL", x + w / 2, 50, 9, "#57433a");
         box(x - 5, y - 5, w + 10, h + 10, "#fff", "#785a48");
-        // The red, green, and yellow zones follow the requested 3:1:2 ratio.
-        box(x, y, w, h * .5, "#df6270"); box(x, y + h * .5, w, h / 6, "#5ea96b"); box(x, y + h * (2 / 3), w, h / 3, "#e5bb54");
+        // Progress climbs from the bottom through red, green, then yellow (3:1:2).
+        box(x, y, w, h / 3, "#e5bb54"); box(x, y + h / 3, w, h / 6, "#5ea96b"); box(x, y + h * .5, w, h * .5, "#df6270");
         const target = 7 / 12;
         box(x - 7, y + h * (1 - target) - 2, w + 14, 4, "#f04c53");
         pixelText("0.3kg", x + w / 2, y + h * (1 - target) - 12, 7, "#ce3948");
@@ -258,6 +268,16 @@
         button(buttons.push, pushing ? "PUSHING..." : "Push!", pushing);
         pixelText("A pause over 1 second ends the run!", 226, 294, 7, "#765a44");
       }
+      function drawBathroomTransition(now) {
+        drawFood(now);
+        const progress = Math.min(1, (now - sceneStartedAt) / 800);
+        const eased = 1 - (1 - progress) ** 3;
+        ctx.save();
+        ctx.translate(W * (1 - eased), 0);
+        drawBathroom(now, true);
+        ctx.restore();
+        cat(W * (1 - eased) + 60, 220, .5, false, "dance");
+      }
       function drawSuccess(now) {
         background("#fff2b0");
         for (let i = 0; i < 18; i++) sparkle(12 + i * 27, 20 + ((i * 39) % 228), "#fff", now / 80 + i);
@@ -281,6 +301,7 @@
       function updateHint() {
         if (scene === "title") hint.innerHTML = "<strong>Click Start</strong> or press <strong>Space</strong> · Choose a food · Hold <strong>Push!</strong> and release in the green zone";
         else if (scene === "food") hint.innerHTML = "Pick a dish to feed your angel cat. Each food changes your challenge!";
+        else if (scene === "eating" || scene === "transition") hint.innerHTML = "Yum! Your angel cat is getting ready...";
         else if (scene === "play") hint.innerHTML = "Hold the button or Spacebar, then release when the marker reaches the green <strong>0.3 kg</strong> target.";
         else if (scene === "result") hint.innerHTML = result === "success" ? "A sparkling success! Click Restart or press Space to play again." : "Try another food and find your rhythm. Click Restart or press Space.";
       }
@@ -304,11 +325,8 @@
         else if (progress > 2 / 3) finish(false);
       }
       function beginFood(key) {
-        food = foodModes[key]; scene = "transition"; sceneStartedAt = performance.now(); progress = 0; pushAccumulated = 0; lastPushAt = 0; pushExpired = false;
+        food = foodModes[key]; scene = "eating"; sceneStartedAt = performance.now(); progress = 0; pushAccumulated = 0; lastPushAt = 0; pushExpired = false;
         sound("tap"); updateHint();
-        window.setTimeout(() => {
-          if (scene === "transition") { scene = "play"; sceneStartedAt = performance.now(); updateHint(); }
-        }, 1550);
       }
       function restart() {
         scene = "title"; progress = 0; pushAccumulated = 0; pushing = false; lastPushAt = 0; pushExpired = false; result = ""; sceneStartedAt = performance.now(); updateHint();
@@ -342,6 +360,11 @@
       window.addEventListener("keyup", event => { if (event.code === "Space") stopPush(); });
 
       function frame(now) {
+        if (scene === "eating" && now - sceneStartedAt >= 1000) {
+          scene = "transition"; sceneStartedAt = now;
+        } else if (scene === "transition" && now - sceneStartedAt >= 800) {
+          scene = "play"; sceneStartedAt = now; updateHint();
+        }
         if (scene === "play") {
           if (pushing) {
             const seconds = (pushAccumulated + now - pushStartedAt) / 1000;
@@ -352,11 +375,11 @@
         }
         if (scene === "title") drawTitle(now);
         else if (scene === "food") drawFood(now);
-        else if (scene === "transition") drawBathroom(now, true);
+        else if (scene === "eating") drawFood(now, true);
+        else if (scene === "transition") drawBathroomTransition(now);
         else if (scene === "play") drawPlay(now);
         else if (scene === "result") result === "success" ? drawSuccess(now) : drawFail(now);
         lastFrame = now; requestAnimationFrame(frame);
       }
       updateHint(); requestAnimationFrame(frame);
     })();
-
