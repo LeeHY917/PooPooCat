@@ -208,7 +208,6 @@
       function drawFood(now) {
         background("#fff0b5");
         box(0, 0, W, 40, "#f9df98");
-        pixelText("Food for Poop", 240, 23, 18, "#93531c");
         const fade = Math.max(0, 1 - (now - sceneStartedAt) / 1800);
         if (fade > 0) {
           ctx.globalAlpha = fade;
@@ -304,8 +303,14 @@
       function drawPlay(now) {
         drawBathroom(now);
         box(0, 0, W, 35, "#fff9e6cc");
-        pixelText("Pooping Time", 240, 19, 17, "#93531c");
+        pixelText("YOUR CHALLENGE", 240, 13, 7, "#8a704f");
         pixelText(`${food.name} · ${food.label}`, 240, 48, 8, "#69533b");
+        const titleFade = Math.max(0, 1 - (now - sceneStartedAt) / 1800);
+        if (titleFade > 0) {
+          ctx.globalAlpha = titleFade;
+          pixelText("Pooping Time", 240, 125, 23, "#a96716", "center", "#fff");
+          ctx.globalAlpha = 1;
+        }
         // Toilet water and the food-specific poop emerging from the top center
         box(197, 189, 86, 8, "#8bd5e6");
         const rise = Math.min(1, progress * 2.8);
