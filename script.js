@@ -37,6 +37,38 @@
           audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
           if (audioContext.state === "suspended") audioContext.resume();
           startBgm();
+          if (kind === "meow") {
+            const now = audioContext.currentTime;
+            [[620, 0, .13], [850, .12, .28]].forEach(([frequency, offset, duration]) => {
+              const osc = audioContext.createOscillator();
+              const gain = audioContext.createGain();
+              osc.type = "triangle";
+              osc.frequency.setValueAtTime(frequency, now + offset);
+              osc.frequency.exponentialRampToValueAtTime(frequency * .72, now + offset + duration);
+              gain.gain.setValueAtTime(.0001, now + offset);
+              gain.gain.exponentialRampToValueAtTime(.08, now + offset + .025);
+              gain.gain.exponentialRampToValueAtTime(.0001, now + offset + duration);
+              osc.connect(gain); gain.connect(audioContext.destination);
+              osc.start(now + offset); osc.stop(now + offset + duration);
+            });
+            return;
+          }
+          if (kind === "splat") {
+            const now = audioContext.currentTime;
+            [[180, 0, .16], [95, .18, .45]].forEach(([frequency, offset, duration]) => {
+              const osc = audioContext.createOscillator();
+              const gain = audioContext.createGain();
+              osc.type = offset ? "sawtooth" : "square";
+              osc.frequency.setValueAtTime(frequency, now + offset);
+              osc.frequency.exponentialRampToValueAtTime(frequency * (offset ? .35 : .55), now + offset + duration);
+              gain.gain.setValueAtTime(.0001, now + offset);
+              gain.gain.exponentialRampToValueAtTime(offset ? .1 : .07, now + offset + .02);
+              gain.gain.exponentialRampToValueAtTime(.0001, now + offset + duration);
+              osc.connect(gain); gain.connect(audioContext.destination);
+              osc.start(now + offset); osc.stop(now + offset + duration);
+            });
+            return;
+          }
           const osc = audioContext.createOscillator();
           const gain = audioContext.createGain();
           osc.connect(gain); gain.connect(audioContext.destination);
@@ -213,16 +245,11 @@
       function drawFood(now, eating = false) {
         background("#fff0b5");
         box(0, 0, W, 40, "#f9df98");
-        const fade = Math.max(0, 1 - (now - sceneStartedAt) / 4000);
-        if (fade > 0) {
-          ctx.globalAlpha = fade;
-          pixelText("Food for Poop", 240, 65, 23, "#a96716", "center", "#fff");
-          const decorateX = 92 + ((Math.sin(now / 1700) + 1) * 90);
-          pixelText("Decorate your Poop", decorateX, 88, 10, "#ff1744", "center", "#fff5b8");
-          sparkle(decorateX - 83, 88, "#ffc928", now / 130, 4);
-          sparkle(decorateX + 83, 88, "#24b9db", now / 130 + 1, 4);
-          ctx.globalAlpha = 1;
-        }
+        pixelText("Food for Poop", 240, 65, 23, "#a96716", "center", "#fff");
+        const decorateX = 92 + ((Math.sin(now / 1700) + 1) * 90);
+        pixelText("Decorate your Poop", decorateX, 88, 10, "#ff1744", "center", "#fff5b8");
+        sparkle(decorateX - 83, 88, "#ffc928", now / 130, 4);
+        sparkle(decorateX + 83, 88, "#24b9db", now / 130 + 1, 4);
         // Table and seated angel cat
         box(0, 176, W, 17, "#b77e4c"); box(0, 193, W, 8, "#8b5a36"); box(34, 201, 15, 65, "#b77e4c"); box(430, 201, 15, 65, "#b77e4c");
         box(171, 101, 138, 82, "#b78455"); box(177, 108, 126, 67, "#dfb67c");
@@ -236,11 +263,18 @@
           { key: "dragon", x: 272, en: "DRAGON FRUIT", zh: "火龍果" }
         ];
         cards.forEach((card, index) => {
-          box(card.x, 206, 93, 67, "#ffedb9", "#d7a45e");
-          foodIcon(card.key, card.x + 46, 224, .72);
-          pixelText(card.key === "corn" ? "Hard Mode" : card.key === "beet" ? "Normal Mode" : "Expert Mode", card.x + 46, 245, 7, "#61472d");
-          pixelText(card.en, card.x + 46, 256, 7, "#965d31");
-          pixelText(card.zh, card.x + 46, 266, 7, "#8b6849");
+          ctx.save();
+          ctx.fillStyle = "#b77e4c";
+          ctx.beginPath(); ctx.ellipse(card.x + 46, 240, 45, 32, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = "#fffdf2";
+          ctx.beginPath(); ctx.ellipse(card.x + 46, 237, 43, 30, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = "#d9cdb5"; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.ellipse(card.x + 46, 237, 37, 24, 0, 0, Math.PI * 2); ctx.stroke();
+          ctx.restore();
+          foodIcon(card.key, card.x + 46, 220, .62);
+          pixelText(card.key === "corn" ? "Hard Mode" : card.key === "beet" ? "Normal Mode" : "Expert Mode", card.x + 46, 237, 7, "#61472d");
+          pixelText(card.en, card.x + 46, 250, 7, "#965d31");
+          pixelText(card.zh, card.x + 46, 262, 7, "#8b6849");
         });
         if (eating) {
           const elapsed = now - sceneStartedAt;
@@ -280,11 +314,13 @@
         box(170, 190, 140, 13, "#fff", "#9cbfc8"); box(181, 202, 118, 48, "#fff", "#9cbfc8"); box(194, 242, 92, 12, "#d9e8e9");
         box(188, 184, 106, 18, "#e9f9fb", "#9cbfc8"); box(197, 187, 88, 10, "#70bbd1");
         for (let i = 0; i < 8; i++) sparkle(184 + ((i * 43) % 112), 189 + ((i * 17) % 53), "#fff", now / 140 + i);
-        // Little cat and transition sign
-        cat(239, 156, .72, false, "strain");
+        // The transition features the strained cat holding its wooden sign;
+        // during play the same cat sits quietly on the toilet.
+        cat(239, 156, .72, false, intro ? "strain" : "sit");
         if (intro) {
-          box(203, 140, 74, 15, "#a36d3d", "#704b2d");
-          pixelText("Pooping Time!", 240, 147, 8, "#fff8da");
+          box(276, 130, 8, 24, "#a36d3d");
+          box(268, 118, 63, 23, "#b77b42", "#704b2d");
+          pixelText("Pooping Time", 299, 130, 8, "#fff8da");
         }
         for (let i = 0; i < 12; i++) sparkle(13 + i * 39, 78 + (i % 3) * 48, "#ffc928", now / 110 + i);
       }
@@ -310,13 +346,13 @@
         pixelText("PULL", x + w / 2, 50, 9, "#57433a");
         box(x - 5, y - 5, w + 10, h + 10, "#fff", "#785a48");
         // Progress climbs from the bottom through red, green, then yellow.
-        box(x, y, w, h * (1 - zone.end), "#e5bb54");
-        box(x, y + h * (1 - zone.end), w, h * (zone.end - zone.start), "#5ea96b");
-        box(x, y + h * (1 - zone.start), w, h * zone.start, "#df6270");
+        box(x, y, w, h * zone.start, "#df6270");
+        box(x, y + h * zone.start, w, h * (zone.end - zone.start), "#5ea96b");
+        box(x, y + h * zone.end, w, h * (1 - zone.end), "#e5bb54");
         const target = (zone.start + zone.end) / 2;
-        box(x - 7, y + h * (1 - target) - 1, w + 14, 2, "#ff1744");
-        pixelText("0.3kg", x + w / 2, y + h * (1 - target) - 12, 8, "#ce3948");
-        const markerY = y + h * (1 - progress);
+        box(x - 7, y + h * target - 1, w + 14, 2, "#ff1744");
+        pixelText("0.3kg", x + w / 2, y + h * target - 12, 8, "#ce3948");
+        const markerY = y + h * progress;
         box(x - 5, markerY - 4, w + 10, 8, "#fff", "#795034");
         pixelText("▲", x - 11, markerY, 9, "#795034");
       }
@@ -338,22 +374,21 @@
         }
         // Toilet water and the food-specific poop emerging from the top center
         box(197, 189, 86, 8, "#8bd5e6");
-        const rise = Math.min(1, progress * 2.8);
-        drawPoop(food.kind, 240, 181 - rise * 50, 1.35, Math.sin(now / 120) * (pushing ? 2 : 1));
+        drawPoop(food.kind, 240, 39 + progress * 132, 1.35, Math.sin(now / 120) * (pushing ? 2 : 1));
         drawMeter();
         pixelText(pushing ? "KEEP HOLDING!" : "HOLD, THEN RELEASE IN GREEN", 226, 231, 7, "#584638");
         button(buttons.push, pushing ? "PUSHING..." : "Push!", pushing);
         pixelText("A pause over 1 second ends the run!", 226, 294, 7, "#765a44");
       }
       function drawBathroomTransition(now) {
-        drawFood(now);
-        const progress = Math.min(1, (now - sceneStartedAt) / 800);
+        const elapsed = now - sceneStartedAt;
+        const progress = Math.min(1, Math.max(0, (elapsed - 350) / 350));
         const eased = 1 - (1 - progress) ** 3;
+        drawPlay(now);
         ctx.save();
-        ctx.translate(W * (1 - eased), 0);
+        ctx.translate(-W * eased, 0);
         drawBathroom(now, true);
         ctx.restore();
-        cat(W * (1 - eased) + 60, 220, .5, false, "dance");
       }
       function drawSuccess(now) {
         background("#fff2b0");
@@ -385,7 +420,7 @@
       function finish(success) {
         if (scene !== "play") return;
         pushing = false; result = success ? "success" : "fail"; scene = "result"; sceneStartedAt = performance.now();
-        sound("flush"); updateHint();
+        sound("splat"); updateHint();
       }
       function startPush() {
         if (scene !== "play" || pushing || pushExpired) return;
@@ -441,8 +476,8 @@
 
       function frame(now) {
         if (scene === "eating" && now - sceneStartedAt >= 1000) {
-          scene = "transition"; sceneStartedAt = now;
-        } else if (scene === "transition" && now - sceneStartedAt >= 800) {
+          scene = "transition"; sceneStartedAt = now; sound("meow");
+        } else if (scene === "transition" && now - sceneStartedAt >= 700) {
           scene = "play"; sceneStartedAt = now; updateHint();
         }
         if (scene === "play") {
