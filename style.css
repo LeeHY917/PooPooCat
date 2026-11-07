@@ -37,7 +37,7 @@
       display: block;
       border: 3px solid #654529;
       background: #fff0b5;
-      image-rendering: auto;
+      image-rendering: pixelated;
       touch-action: none;
       cursor: pointer;
     }

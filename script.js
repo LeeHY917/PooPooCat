@@ -70,8 +70,8 @@
         box(rect.x + 5, rect.y + 4, rect.w - 10, 3, "#fff1b1");
         pixelText(label, rect.x + rect.w / 2, rect.y + rect.h / 2 + 1, 15, "#80501e");
       }
-      function sparkle(x, y, color = "#fffbe1", phase = 0) {
-        const s = 2 + (Math.sin(phase) + 1);
+      function sparkle(x, y, color = "#fffbe1", phase = 0, size = 6) {
+        const s = size + (Math.sin(phase) + 1) * 2;
         box(x - s / 2, y - 1, s, 2, color); box(x - 1, y - s / 2, 2, s, color);
       }
       function cat(x, y, scale = 1, tired = false, pose = "sit") {
@@ -117,7 +117,7 @@
         box(0, 0, W, H, color);
         box(0, 260, W, 40, "#f6d98b");
         for (let x = 10; x < W; x += 32) for (let y = 12; y < 250; y += 28) {
-          if ((x + y) % 4 === 0) sparkle(x, y, "#fff8d5", x * .2 + y);
+          if ((x + y) % 4 === 0) sparkle(x, y, "#ffc928", x * .2 + y);
         }
       }
       function drawTitle(now) {
@@ -129,12 +129,15 @@
           const center = i === 0, phase = now / 180 + i;
           cat(240 + i * 78, 160, center ? 1 : .58, false, "dance");
           if (center) {
-            const poopY = 108 + (Math.sin(phase) > .3 ? 0 : 7);
-            box(232, poopY, 16, 6, "#70452f"); box(236, poopY - 5, 11, 6, "#70452f"); box(241, poopY - 9, 5, 5, "#70452f");
-            box(242, poopY - 12, 3, 3, "#9a6a47");
+            const blink = .55 + (Math.sin(now / 95) + 1) * .2;
+            ctx.save(); ctx.globalAlpha = blink;
+            drawPoop("classic", 240, 112 + Math.sin(now / 100) * 3, 1.15, 0);
+            sparkle(225, 105, "#ffc928", now / 90, 8);
+            sparkle(256, 113, "#ff6d35", now / 110 + 2, 8);
+            ctx.restore();
           }
         }
-        for (let i = 0; i < 8; i++) sparkle(31 + i * 60, 104 + Math.sin(now / 250 + i) * 10, "#fff", now / 240 + i);
+        for (let i = 0; i < 8; i++) sparkle(31 + i * 60, 104 + Math.sin(now / 250 + i) * 10, "#ffc928", now / 240 + i);
         button(buttons.start, "Start!");
         pixelText("SPACE OR CLICK TO BEGIN", 240, 292, 8, "#8d693f");
       }
@@ -157,11 +160,14 @@
       function drawFood(now, eating = false) {
         background("#fff0b5");
         box(0, 0, W, 40, "#f9df98");
-        const fade = Math.max(0, 1 - (now - sceneStartedAt) / 1800);
+        const fade = Math.max(0, 1 - (now - sceneStartedAt) / 4000);
         if (fade > 0) {
           ctx.globalAlpha = fade;
           pixelText("Food for Poop", 240, 65, 23, "#a96716", "center", "#fff");
-          pixelText("Decorate your Poop", 92 + ((Math.sin(now / 1700) + 1) * 90), 88, 10, "#ab8b57");
+          const decorateX = 92 + ((Math.sin(now / 1700) + 1) * 90);
+          pixelText("Decorate your Poop", decorateX, 88, 10, "#e33e68", "center", "#fff5b8");
+          sparkle(decorateX - 83, 88, "#ffc928", now / 130, 4);
+          sparkle(decorateX + 83, 88, "#24b9db", now / 130 + 1, 4);
           ctx.globalAlpha = 1;
         }
         // Table and seated angel cat
@@ -215,8 +221,8 @@
         sparkle(384, 74, "#fff", now / 300); sparkle(421, 93, "#fff", now / 300 + 2);
         box(369, 139, 60, 19, "#fff", "#91bfc9"); box(374, 157, 50, 45, "#fbffff", "#91bfc9"); box(386, 133, 24, 5, "#a9d8e3");
         // Target poster
-        box(181, 24, 118, 47, "#fff", "#bfdae0");
-        pixelText("POOP TARGET", 240, 38, 8, "#627a81"); pixelText("0.3 kg", 240, 55, 17, "#db5265");
+        box(181, 74, 118, 38, "#fff", "#bfdae0");
+        pixelText("POOP TARGET", 240, 83, 8, "#315d70"); pixelText("0.3 kg", 240, 99, 11, "#e23f55");
         // Toilet
         box(170, 190, 140, 13, "#fff", "#9cbfc8"); box(181, 202, 118, 48, "#fff", "#9cbfc8"); box(194, 242, 92, 12, "#d9e8e9");
         box(188, 184, 106, 18, "#e9f9fb", "#9cbfc8"); box(197, 187, 88, 10, "#70bbd1");
@@ -227,12 +233,13 @@
           box(203, 140, 74, 15, "#a36d3d", "#704b2d");
           pixelText("Pooping Time!", 240, 147, 8, "#fff8da");
         }
-        for (let i = 0; i < 12; i++) sparkle(13 + i * 39, 78 + (i % 3) * 48, "#fff5b3", now / 110 + i);
+        for (let i = 0; i < 12; i++) sparkle(13 + i * 39, 78 + (i % 3) * 48, "#ffc928", now / 110 + i);
       }
       function drawPoop(kind, x, y, scale = 1, wobble = 0) {
         ctx.save(); ctx.translate(x, y + wobble); ctx.scale(scale, scale);
         if (kind === "classic") {
           box(-12, 8, 24, 8, "#68402c"); box(-9, 0, 18, 9, "#68402c"); box(-6, -7, 13, 8, "#68402c"); box(-3, -13, 8, 7, "#68402c"); box(0, -17, 3, 5, "#9a6a47");
+          box(-8, 2, 4, 2, "#a97852"); box(-5, -5, 4, 2, "#ba8a60"); box(2, 10, 5, 2, "#89583c");
         } else if (kind === "corn") {
           box(-14, 4, 28, 12, "#242127"); box(-10, -4, 21, 10, "#242127"); box(-5, -12, 12, 9, "#242127");
           [[-8,8],[1,6],[8,10],[-3,0],[6,-2]].forEach(([sx,sy]) => box(sx, sy, 4, 4, "#f5c839"));
@@ -246,23 +253,31 @@
       }
       function drawMeter() {
         const x = 414, y = 65, h = 168, w = 28;
+        const zone = meterZone();
         pixelText("PULL", x + w / 2, 50, 9, "#57433a");
         box(x - 5, y - 5, w + 10, h + 10, "#fff", "#785a48");
-        // Progress climbs from the bottom through red, green, then yellow (3:1:2).
-        box(x, y, w, h / 3, "#e5bb54"); box(x, y + h / 3, w, h / 6, "#5ea96b"); box(x, y + h * .5, w, h * .5, "#df6270");
-        const target = 7 / 12;
+        // Progress climbs from the bottom through red, green, then yellow.
+        box(x, y, w, h * (1 - zone.end), "#e5bb54");
+        box(x, y + h * (1 - zone.end), w, h * (zone.end - zone.start), "#5ea96b");
+        box(x, y + h * (1 - zone.start), w, h * zone.start, "#df6270");
+        const target = (zone.start + zone.end) / 2;
         box(x - 7, y + h * (1 - target) - 2, w + 14, 4, "#f04c53");
         pixelText("0.3kg", x + w / 2, y + h * (1 - target) - 12, 8, "#ce3948");
         const markerY = y + h * (1 - progress);
         box(x - 5, markerY - 4, w + 10, 8, "#fff", "#795034");
         pixelText("▲", x - 11, markerY, 9, "#795034");
       }
+      function meterZone() {
+        const center = 7 / 12;
+        const halfWidth = food.kind === "corn" ? .035 : food.kind === "dragon" ? .025 : 1 / 12;
+        return { start: center - halfWidth, end: center + halfWidth };
+      }
       function drawPlay(now) {
         drawBathroom(now);
         box(0, 0, W, 35, "#fff9e6cc");
         pixelText("YOUR CHALLENGE", 240, 13, 7, "#8a704f");
         pixelText(`${food.name} · ${food.label}`, 240, 48, 8, "#69533b");
-        const titleFade = Math.max(0, 1 - (now - sceneStartedAt) / 1800);
+        const titleFade = Math.max(0, 1 - (now - sceneStartedAt) / 4000);
         if (titleFade > 0) {
           ctx.globalAlpha = titleFade;
           pixelText("Pooping Time", 240, 125, 23, "#a96716", "center", "#fff");
@@ -304,7 +319,7 @@
         cat(240, 168, 1.25, true, "sit");
         pixelText("OOPS!", 240, 224, 11, "#6792c5");
         pixelText("Fail", 240, 253, 23, "#6587b0", "center", "#fff");
-        pixelText(progress < .48 ? "Not quite enough!" : "Too much oomph!", 240, 276, 9, "#6783a2");
+        pixelText(progress < meterZone().start ? "Not quite enough!" : "Too much oomph!", 240, 276, 9, "#6783a2");
         button(buttons.restart, "Restart!");
       }
       function updateHint() {
@@ -330,11 +345,14 @@
         pushAccumulated += now - pushStartedAt;
         progress = Math.min(1, pushAccumulated / 1000 / food.time * (7 / 12));
         pushing = false; lastPushAt = now;
-        if (progress >= .5 && progress <= 2 / 3) finish(true);
-        else if (progress > 2 / 3) finish(false);
+        const zone = meterZone();
+        if (progress >= zone.start && progress <= zone.end) finish(true);
+        else if (progress > zone.end) finish(false);
       }
       function beginFood(key) {
-        food = foodModes[key]; scene = "eating"; sceneStartedAt = performance.now(); progress = 0; pushAccumulated = 0; lastPushAt = 0; pushExpired = false;
+        food = { ...foodModes[key] };
+        if (key === "dragon") food.time *= 1.15 + Math.random() * .85;
+        scene = "eating"; sceneStartedAt = performance.now(); progress = 0; pushAccumulated = 0; lastPushAt = 0; pushExpired = false;
         sound("tap"); updateHint();
       }
       function restart() {
