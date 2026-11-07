@@ -5,10 +5,10 @@
       const W = canvas.width, H = canvas.height;
       const PIXEL_GRID = 2;
       const foodModes = {
-        rice: { name: "Rice", label: "EASY MODE", time: 6, color: "#68402c", kind: "classic" },
-        corn: { name: "Corn", label: "HARD MODE", time: 10.43, color: "#242127", kind: "corn" },
-        beet: { name: "Beetroot", label: "NORMAL MODE", time: 4.5, color: "#c53654", kind: "beet" },
-        dragon: { name: "Dragon Fruit", label: "EXPERT MODE", time: 3.14, color: "#f0d743", kind: "dragon" }
+        rice: { name: "Rice", label: "EASY MODE", time: 2, color: "#68402c", kind: "classic" },
+        corn: { name: "Corn", label: "HARD MODE", time: 10.43 / 3, color: "#242127", kind: "corn" },
+        beet: { name: "Beetroot", label: "NORMAL MODE", time: 1.5, color: "#c53654", kind: "beet" },
+        dragon: { name: "Dragon Fruit", label: "EXPERT MODE", time: 3.14 / 3, color: "#f0d743", kind: "dragon" }
       };
       let scene = "title";
       let food = foodModes.rice;
@@ -53,14 +53,12 @@
         if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = PIXEL_GRID; ctx.strokeRect(left, top, width, height); }
       }
       function pixelText(text, x, y, size = 10, color = "#59402e", align = "center", outline = null) {
-        const readableSize = Math.max(size, 10);
+        const readableSize = Math.max(size, size <= 8 ? 8 : 10);
         ctx.save();
-        ctx.font = `bold ${readableSize}px Arial, sans-serif`;
+        ctx.font = `600 ${readableSize}px Arial, "Noto Sans TC", "Microsoft JhengHei", sans-serif`;
         ctx.textAlign = align;
         ctx.textBaseline = "middle";
-        ctx.letterSpacing = `${Math.max(.4, readableSize * .04)}px`;
-        ctx.shadowColor = "#fff9e8";
-        ctx.shadowBlur = 1;
+        ctx.letterSpacing = ".2px";
         if (outline) { ctx.lineWidth = 3; ctx.strokeStyle = outline; ctx.strokeText(text, x, y); }
         ctx.fillStyle = color;
         ctx.fillText(text, x, y);
@@ -162,7 +160,7 @@
         const fade = Math.max(0, 1 - (now - sceneStartedAt) / 1800);
         if (fade > 0) {
           ctx.globalAlpha = fade;
-          pixelText("Food for Poop", 240, 120, 23, "#a96716", "center", "#fff");
+          pixelText("Food for Poop", 240, 65, 23, "#a96716", "center", "#fff");
           pixelText("Decorate your Poop", 92 + ((Math.sin(now / 1700) + 1) * 90), 88, 10, "#ab8b57");
           ctx.globalAlpha = 1;
         }
@@ -172,11 +170,11 @@
         cat(240, 131 + (eating ? Math.sin(now / 70) * 2 : 0), .85, false, eating ? "dance" : "sit");
         foodIcon("rice", 240, 181, .95);
         pixelText("Easy Mode", 240, 158, 9, "#6b542b");
-        pixelText("Rice / 米饭", 240, 170, 7, "#8b6849");
+        pixelText("Rice / 米飯", 240, 170, 7, "#8b6849");
         const cards = [
           { key: "corn", x: 48, en: "CORN", zh: "玉米" },
-          { key: "beet", x: 160, en: "BEETROOT", zh: "红菜头" },
-          { key: "dragon", x: 272, en: "DRAGON FRUIT", zh: "火龙果" }
+          { key: "beet", x: 160, en: "BEETROOT", zh: "紅菜頭" },
+          { key: "dragon", x: 272, en: "DRAGON FRUIT", zh: "火龍果" }
         ];
         cards.forEach((card, index) => {
           box(card.x, 206, 93, 67, "#ffedb9", "#d7a45e");
@@ -254,7 +252,7 @@
         box(x, y, w, h / 3, "#e5bb54"); box(x, y + h / 3, w, h / 6, "#5ea96b"); box(x, y + h * .5, w, h * .5, "#df6270");
         const target = 7 / 12;
         box(x - 7, y + h * (1 - target) - 2, w + 14, 4, "#f04c53");
-        pixelText("0.3kg", x + w / 2, y + h * (1 - target) - 12, 7, "#ce3948");
+        pixelText("0.3kg", x + w / 2, y + h * (1 - target) - 12, 8, "#ce3948");
         const markerY = y + h * (1 - progress);
         box(x - 5, markerY - 4, w + 10, 8, "#fff", "#795034");
         pixelText("▲", x - 11, markerY, 9, "#795034");
