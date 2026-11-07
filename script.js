@@ -39,7 +39,7 @@
           startBgm();
           if (kind === "meow") {
             const now = audioContext.currentTime;
-            [[620, 0, .13], [850, .12, .28]].forEach(([frequency, offset, duration]) => {
+            [[620, 0, .18], [850, .18, .32]].forEach(([frequency, offset, duration]) => {
               const osc = audioContext.createOscillator();
               const gain = audioContext.createGain();
               osc.type = "triangle";
@@ -84,18 +84,31 @@
 
       function startBgm() {
         if (bgmTimer || !audioContext) return;
-        const melody = [523.25, 659.25, 783.99, 659.25, 587.33, 698.46, 880, 698.46];
+        const melody = [523.25, 659.25, 783.99, 659.25, 493.88, 587.33, 698.46, 587.33];
         bgmTimer = window.setInterval(() => {
           if (audioContext.state !== "running") return;
+          const step = bgmStep++;
           const osc = audioContext.createOscillator();
           const gain = audioContext.createGain();
-          osc.type = "square";
-          osc.frequency.value = melody[bgmStep++ % melody.length];
+          osc.type = "triangle";
+          osc.frequency.value = melody[step % melody.length];
           gain.gain.setValueAtTime(.0001, audioContext.currentTime);
-          gain.gain.exponentialRampToValueAtTime(.012, audioContext.currentTime + .025);
-          gain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + .22);
+          gain.gain.exponentialRampToValueAtTime(.018, audioContext.currentTime + .025);
+          gain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + .2);
           osc.connect(gain); gain.connect(audioContext.destination);
-          osc.start(); osc.stop(audioContext.currentTime + .23);
+          osc.start(); osc.stop(audioContext.currentTime + .21);
+          if (step % 4 === 3) {
+            const plop = audioContext.createOscillator();
+            const plopGain = audioContext.createGain();
+            plop.type = "sine";
+            plop.frequency.setValueAtTime(165, audioContext.currentTime);
+            plop.frequency.exponentialRampToValueAtTime(62, audioContext.currentTime + .14);
+            plopGain.gain.setValueAtTime(.0001, audioContext.currentTime);
+            plopGain.gain.exponentialRampToValueAtTime(.035, audioContext.currentTime + .012);
+            plopGain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + .15);
+            plop.connect(plopGain); plopGain.connect(audioContext.destination);
+            plop.start(); plop.stop(audioContext.currentTime + .16);
+          }
         }, 280);
       }
 
@@ -382,13 +395,15 @@
       }
       function drawBathroomTransition(now) {
         const elapsed = now - sceneStartedAt;
-        const progress = Math.min(1, Math.max(0, (elapsed - 350) / 350));
+        const progress = Math.min(1, Math.max(0, (elapsed - 2400) / 600));
         const eased = 1 - (1 - progress) ** 3;
-        drawPlay(now);
-        ctx.save();
-        ctx.translate(-W * eased, 0);
         drawBathroom(now, true);
-        ctx.restore();
+        if (progress > 0) {
+          ctx.save();
+          ctx.translate(W * (1 - eased), 0);
+          drawPlay(now);
+          ctx.restore();
+        }
       }
       function drawSuccess(now) {
         background("#fff2b0");
@@ -477,8 +492,8 @@
       function frame(now) {
         if (scene === "eating" && now - sceneStartedAt >= 1000) {
           scene = "transition"; sceneStartedAt = now; sound("meow");
-        } else if (scene === "transition" && now - sceneStartedAt >= 700) {
-          scene = "play"; sceneStartedAt = now; updateHint();
+        } else if (scene === "transition" && now - sceneStartedAt >= 3000) {
+          sound("flush"); scene = "play"; sceneStartedAt = now; updateHint();
         }
         if (scene === "play") {
           if (pushing) {
