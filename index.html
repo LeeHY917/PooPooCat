@@ -75,6 +75,7 @@
       let food = foodModes.rice;
       let progress = 0;
       let pushStartedAt = 0;
+      let pushAccumulated = 0;
       let lastPushAt = 0;
       let pushing = false;
       let pushExpired = false;
@@ -291,10 +292,11 @@
         const x = 414, y = 65, h = 168, w = 28;
         pixelText("PULL", x + w / 2, 50, 9, "#57433a");
         box(x - 5, y - 5, w + 10, h + 10, "#fff", "#785a48");
-        // Green success window is 48%-56%; red and yellow are failure zones.
-        box(x, y, w, h * .48, "#df6270"); box(x, y + h * .48, w, h * .08, "#5ea96b"); box(x, y + h * .56, w, h * .44, "#e5bb54");
-        box(x - 7, y + h * .5 - 2, w + 14, 4, "#f04c53");
-        pixelText("0.3kg", x + w / 2, y + h * .5 - 12, 7, "#ce3948");
+        // The red, green, and yellow zones follow the requested 3:1:2 ratio.
+        box(x, y, w, h * .5, "#df6270"); box(x, y + h * .5, w, h / 6, "#5ea96b"); box(x, y + h * (2 / 3), w, h / 3, "#e5bb54");
+        const target = 7 / 12;
+        box(x - 7, y + h * (1 - target) - 2, w + 14, 4, "#f04c53");
+        pixelText("0.3kg", x + w / 2, y + h * (1 - target) - 12, 7, "#ce3948");
         const markerY = y + h * (1 - progress);
         box(x - 5, markerY - 4, w + 10, 8, "#fff", "#795034");
         pixelText("▲", x - 11, markerY, 9, "#795034");
@@ -351,19 +353,22 @@
       }
       function stopPush() {
         if (scene !== "play" || !pushing) return;
-        pushing = false; lastPushAt = performance.now();
-        if (progress >= .48 && progress <= .56) finish(true);
-        else if (progress > .56) finish(false);
+        const now = performance.now();
+        pushAccumulated += now - pushStartedAt;
+        progress = Math.min(1, pushAccumulated / 1000 / food.time * (7 / 12));
+        pushing = false; lastPushAt = now;
+        if (progress >= .5 && progress <= 2 / 3) finish(true);
+        else if (progress > 2 / 3) finish(false);
       }
       function beginFood(key) {
-        food = foodModes[key]; scene = "transition"; sceneStartedAt = performance.now(); progress = 0; lastPushAt = 0; pushExpired = false;
+        food = foodModes[key]; scene = "transition"; sceneStartedAt = performance.now(); progress = 0; pushAccumulated = 0; lastPushAt = 0; pushExpired = false;
         sound("tap"); updateHint();
         window.setTimeout(() => {
           if (scene === "transition") { scene = "play"; sceneStartedAt = performance.now(); updateHint(); }
         }, 1550);
       }
       function restart() {
-        scene = "title"; progress = 0; pushing = false; lastPushAt = 0; pushExpired = false; result = ""; sceneStartedAt = performance.now(); updateHint();
+        scene = "title"; progress = 0; pushAccumulated = 0; pushing = false; lastPushAt = 0; pushExpired = false; result = ""; sceneStartedAt = performance.now(); updateHint();
       }
       function point(event) {
         const rect = canvas.getBoundingClientRect();
@@ -396,8 +401,8 @@
       function frame(now) {
         if (scene === "play") {
           if (pushing) {
-            const seconds = (now - pushStartedAt) / 1000;
-            progress = Math.min(1, seconds / food.time);
+            const seconds = (pushAccumulated + now - pushStartedAt) / 1000;
+            progress = Math.min(1, seconds / food.time * (7 / 12));
           } else if (lastPushAt && now - lastPushAt > 1000) {
             pushExpired = true; finish(false);
           }
