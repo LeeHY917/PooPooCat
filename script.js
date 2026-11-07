@@ -397,7 +397,7 @@
         box(184, 225, 112, 31, "#fff", "#9cbfc8");
         box(194, 248, 92, 12, "#d9e8e9");
         box(164, 207, 152, 11, "#eefbfc", "#91bfc9");
-        cat(239, 177, .78, false, "frown");
+        cat(239, 185, .78, false, "frown");
         for (let i = 0; i < 5; i++) sparkle(164 + i * 36, 82 + (i % 2) * 32, "#fff", now / 190 + i, 4);
       }
       function drawPlay(now) {
