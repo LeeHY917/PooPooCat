@@ -119,7 +119,7 @@
         box(-12, 5, 24, 23, "#fff8de"); box(-8, 11, 16, 13, "#fff");
         // Head, ears, cheeks
         box(-24, -33, 48, 37, gold); box(-23, -40, 13, 13, gold); box(10, -40, 13, 13, gold);
-        box(-19, -36, 7, 6, "#f29b89"); box(12, -36, 7, 6, "#f29b89");
+        box(-19, -36, 7, 6, "#ff6b78"); box(12, -36, 7, 6, "#ff6b78");
         box(-17, -25, 5, 7, "#392f30"); box(12, -25, 5, 7, "#392f30");
         box(-14, -11, 4, 3, "#ef9588"); box(10, -11, 4, 3, "#ef9588");
         box(-3, -15, 6, 4, "#b97359"); box(-1, -11, 2, 4, "#6a493c");
@@ -180,9 +180,9 @@
           for (let yy = -9; yy < 12; yy += 6) for (let xx = -4; xx < 6; xx += 6) box(xx, yy, 3, 3, "#fff18a");
           box(-13, 5, 7, 13, "#6a9c51"); box(6, 5, 7, 13, "#6a9c51");
         } else if (kind === "beet") {
-          box(-12, -8, 24, 22, "#bd3653"); box(-8, -13, 16, 8, "#db5265"); box(-2, 12, 4, 7, "#628c4a"); box(-8, -14, 7, 6, "#7ca85a"); box(2, -15, 7, 7, "#7ca85a");
+          box(-12, -8, 24, 22, "#ff1744"); box(-8, -13, 16, 8, "#ff4d68"); box(-2, 12, 4, 7, "#628c4a"); box(-8, -14, 7, 6, "#7ca85a"); box(2, -15, 7, 7, "#7ca85a");
         } else {
-          box(-16, -11, 32, 22, "#ed8794"); box(-12, -15, 24, 8, "#ffdce0"); box(-11, 10, 22, 6, "#8e594c");
+          box(-16, -11, 32, 22, "#ff5b91"); box(-12, -15, 24, 8, "#ffdce0"); box(-11, 10, 22, 6, "#8e594c");
           box(-13, -17, 7, 4, "#4f9b58"); box(-7, -19, 7, 4, "#68b75b"); box(0, -19, 7, 4, "#4f9b58"); box(7, -17, 7, 4, "#68b75b");
           box(-18, -9, 4, 9, "#4f9b58"); box(14, -9, 4, 9, "#4f9b58");
           for (const [sx, sy] of [[-8,-4],[2,-6],[8,2],[-2,5],[5,-1]]) box(sx, sy, 2, 2, "#34313a");
@@ -197,7 +197,7 @@
           ctx.globalAlpha = fade;
           pixelText("Food for Poop", 240, 65, 23, "#a96716", "center", "#fff");
           const decorateX = 92 + ((Math.sin(now / 1700) + 1) * 90);
-          pixelText("Decorate your Poop", decorateX, 88, 10, "#e33e68", "center", "#fff5b8");
+          pixelText("Decorate your Poop", decorateX, 88, 10, "#ff1744", "center", "#fff5b8");
           sparkle(decorateX - 83, 88, "#ffc928", now / 130, 4);
           sparkle(decorateX + 83, 88, "#24b9db", now / 130 + 1, 4);
           ctx.globalAlpha = 1;
@@ -254,7 +254,7 @@
         box(369, 139, 60, 19, "#fff", "#91bfc9"); box(374, 157, 50, 45, "#fbffff", "#91bfc9"); box(386, 133, 24, 5, "#a9d8e3");
         // Target poster
         box(181, 74, 118, 38, "#fff", "#bfdae0");
-        pixelText("POOP TARGET", 240, 83, 8, "#315d70"); pixelText("0.3 kg", 240, 99, 11, "#e23f55");
+        pixelText("POOP TARGET", 240, 83, 8, "#315d70"); pixelText("0.3 kg", 240, 99, 11, "#ff1744");
         // Toilet
         box(170, 190, 140, 13, "#fff", "#9cbfc8"); box(181, 202, 118, 48, "#fff", "#9cbfc8"); box(194, 242, 92, 12, "#d9e8e9");
         box(188, 184, 106, 18, "#e9f9fb", "#9cbfc8"); box(197, 187, 88, 10, "#70bbd1");
@@ -276,7 +276,7 @@
           box(-14, 4, 28, 12, "#242127"); box(-10, -4, 21, 10, "#242127"); box(-5, -12, 12, 9, "#242127");
           [[-8,8],[1,6],[8,10],[-3,0],[6,-2]].forEach(([sx,sy]) => box(sx, sy, 4, 4, "#f5c839"));
         } else if (kind === "beet") {
-          box(-15, 2, 29, 13, "#c53654"); box(-11, -4, 23, 9, "#e05268"); box(-4, -9, 12, 8, "#c53654"); box(-8, 7, 5, 3, "#f28a92");
+          box(-15, 2, 29, 13, "#ff1744"); box(-11, -4, 23, 9, "#ff4964"); box(-4, -9, 12, 8, "#ff1744"); box(-8, 7, 5, 3, "#ff7287");
         } else {
           box(-16, 2, 32, 14, "#f0d743"); box(-11, -4, 24, 9, "#ffed70"); box(-4, -8, 11, 7, "#f0d743");
           [[-9,6],[1,4],[8,9],[-3,-1],[7,-2]].forEach(([sx,sy]) => box(sx, sy, 2, 2, "#242127"));
@@ -293,7 +293,7 @@
         box(x, y + h * (1 - zone.end), w, h * (zone.end - zone.start), "#5ea96b");
         box(x, y + h * (1 - zone.start), w, h * zone.start, "#df6270");
         const target = (zone.start + zone.end) / 2;
-        box(x - 7, y + h * (1 - target) - 2, w + 14, 4, "#f04c53");
+        box(x - 7, y + h * (1 - target) - 1, w + 14, 2, "#ff1744");
         pixelText("0.3kg", x + w / 2, y + h * (1 - target) - 12, 8, "#ce3948");
         const markerY = y + h * (1 - progress);
         box(x - 5, markerY - 4, w + 10, 8, "#fff", "#795034");
@@ -383,7 +383,7 @@
       }
       function beginFood(key) {
         food = { ...foodModes[key] };
-        if (key === "dragon") food.time *= 1.15 + Math.random() * .85;
+        if (key === "dragon") food.time = .6 + Math.random() * .8;
         scene = "eating"; sceneStartedAt = performance.now(); progress = 0; pushAccumulated = 0; lastPushAt = 0; pushExpired = false;
         sound("tap"); updateHint();
       }
