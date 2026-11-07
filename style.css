@@ -37,10 +37,9 @@
       display: block;
       border: 3px solid #654529;
       background: #fff0b5;
-      image-rendering: pixelated;
+      image-rendering: auto;
       touch-action: none;
       cursor: pointer;
     }
     .hint { margin: 16px 4px 0; font-size: clamp(12px, 2vw, 15px); line-height: 1.5; }
     .hint strong { color: #93531c; }
-

@@ -3,6 +3,7 @@
       const ctx = canvas.getContext("2d");
       const hint = document.querySelector("#hint");
       const W = canvas.width, H = canvas.height;
+      const PIXEL_GRID = 2;
       const foodModes = {
         rice: { name: "Rice", label: "EASY MODE", time: 6, color: "#68402c", kind: "classic" },
         corn: { name: "Corn", label: "HARD MODE", time: 10.43, color: "#242127", kind: "corn" },
@@ -45,13 +46,25 @@
       }
 
       function box(x, y, w, h, color, stroke) {
-        ctx.fillStyle = color; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
-        if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.strokeRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
+        const snap = value => Math.round(value / PIXEL_GRID) * PIXEL_GRID;
+        const left = snap(x), top = snap(y);
+        const width = Math.max(PIXEL_GRID, snap(w)), height = Math.max(PIXEL_GRID, snap(h));
+        ctx.fillStyle = color; ctx.fillRect(left, top, width, height);
+        if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = PIXEL_GRID; ctx.strokeRect(left, top, width, height); }
       }
       function pixelText(text, x, y, size = 10, color = "#59402e", align = "center", outline = null) {
-        ctx.save(); ctx.font = `bold ${size}px "Courier New", monospace`; ctx.textAlign = align; ctx.textBaseline = "middle";
+        const readableSize = Math.max(size, 10);
+        ctx.save();
+        ctx.font = `bold ${readableSize}px Arial, sans-serif`;
+        ctx.textAlign = align;
+        ctx.textBaseline = "middle";
+        ctx.letterSpacing = `${Math.max(.4, readableSize * .04)}px`;
+        ctx.shadowColor = "#fff9e8";
+        ctx.shadowBlur = 1;
         if (outline) { ctx.lineWidth = 3; ctx.strokeStyle = outline; ctx.strokeText(text, x, y); }
-        ctx.fillStyle = color; ctx.fillText(text, x, y); ctx.restore();
+        ctx.fillStyle = color;
+        ctx.fillText(text, x, y);
+        ctx.restore();
       }
       function button(rect, label, active = false) {
         box(rect.x, rect.y + 4, rect.w, rect.h, "#94601f");
@@ -210,15 +223,13 @@
         box(170, 190, 140, 13, "#fff", "#9cbfc8"); box(181, 202, 118, 48, "#fff", "#9cbfc8"); box(194, 242, 92, 12, "#d9e8e9");
         box(188, 184, 106, 18, "#e9f9fb", "#9cbfc8"); box(197, 187, 88, 10, "#70bbd1");
         for (let i = 0; i < 8; i++) sparkle(184 + ((i * 43) % 112), 189 + ((i * 17) % 53), "#fff", now / 140 + i);
-        // Little cat and sign
+        // Little cat and transition sign
         cat(239, 156, .72, false, "strain");
-        box(203, 140, 74, 15, "#a36d3d", "#704b2d");
-        pixelText(intro ? "Pooping Time!" : "READY?", 240, 147, 8, "#fff8da");
-        for (let i = 0; i < 12; i++) sparkle(13 + i * 39, 78 + (i % 3) * 48, "#fff5b3", now / 110 + i);
         if (intro) {
-          box(0, 0, W, H, "#ffffff66");
-          pixelText("GET READY!", 240, 277, 13, "#39788a", "center", "#fff");
+          box(203, 140, 74, 15, "#a36d3d", "#704b2d");
+          pixelText("Pooping Time!", 240, 147, 8, "#fff8da");
         }
+        for (let i = 0; i < 12; i++) sparkle(13 + i * 39, 78 + (i % 3) * 48, "#fff5b3", now / 110 + i);
       }
       function drawPoop(kind, x, y, scale = 1, wobble = 0) {
         ctx.save(); ctx.translate(x, y + wobble); ctx.scale(scale, scale);
