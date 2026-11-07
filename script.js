@@ -108,7 +108,9 @@
         ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
         const gold = tired ? "#d9b866" : "#f7c84c";
         const shade = tired ? "#aa925c" : "#d99b2e";
-        const bob = pose === "dance" ? Math.sin(performance.now() / 90) * 3 : 0;
+        const now = performance.now();
+        const bob = pose === "dance" || pose === "head" || pose === "twist" || pose === "reveal" ? Math.sin(now / 90) * 3 : 0;
+        if (pose === "twist") ctx.rotate(Math.sin(now / 100) * .16);
         ctx.translate(0, bob);
         // Wings
         box(-27, -35, 12, 21, "#fff"); box(-32, -31, 7, 11, "#fff"); box(15, -35, 12, 21, "#fff"); box(25, -31, 7, 11, "#fff");
@@ -133,6 +135,12 @@
         } else if (pose === "dance") {
           box(-34, -18, 11, 7, gold); box(23, -18, 11, 7, gold);
           box(-37, -22, 8, 8, "#fff1d2"); box(29, -22, 8, 8, "#fff1d2");
+        } else if (pose === "head") {
+          box(-29, -35, 9, 17, gold); box(20, -35, 9, 17, gold);
+          box(-31, -40, 8, 8, "#fff1d2"); box(23, -40, 8, 8, "#fff1d2");
+        } else if (pose === "reveal") {
+          box(-29, 1, 9, 16, gold); box(20, -21, 10, 17, gold);
+          box(-27, 13, 8, 6, "#fff1d2"); box(26, -27, 8, 8, "#fff1d2");
         } else {
           box(-27, 2, 8, 15, gold); box(19, 2, 8, 15, gold);
           box(-26, 14, 7, 5, "#fff1d2"); box(20, 14, 7, 5, "#fff1d2");
@@ -154,16 +162,29 @@
         background("#fff0b5");
         pixelText("A TINY ANGEL CAT ADVENTURE", 240, 32, 9, "#a4793c");
         pixelText("Poo Poo Cat", 240, 69, 31, "#a96716", "center", "#fff");
-        // Repeating outward cat parade
+        // Each pair of cats repeats the center cat's gesture with an outward delay.
+        const cycle = 3000;
         for (let i = -2; i <= 2; i++) {
-          const center = i === 0, phase = now / 180 + i;
-          cat(240 + i * 78, 160, center ? 1 : .58, false, "dance");
-          if (center) {
-            const blink = .55 + (Math.sin(now / 95) + 1) * .2;
+          const distance = Math.abs(i);
+          const localTime = now - sceneStartedAt - distance * 340;
+          let pose = "sit";
+          let reveal = false;
+          if (localTime >= 0) {
+            const phase = localTime % cycle;
+            if (phase < 850) pose = "head";
+            else if (phase < 1700) pose = "twist";
+            else if (phase < 2450) { pose = "reveal"; reveal = true; }
+            else pose = "head";
+          }
+          const x = 240 + i * 78;
+          const y = 160;
+          const scale = distance === 0 ? 1 : .58;
+          cat(x, y, scale, false, pose);
+          if (reveal) {
+            const blink = .72 + (Math.sin(now / 95 + distance) + 1) * .12;
             ctx.save(); ctx.globalAlpha = blink;
-            drawPoop("classic", 240, 112 + Math.sin(now / 100) * 3, 1.15, 0);
-            sparkle(225, 105, "#ffc928", now / 90, 8);
-            sparkle(256, 113, "#ff6d35", now / 110 + 2, 8);
+            drawPoop("classic", x + 28 * scale, y - 25 * scale + Math.sin(now / 100 + distance) * 2, .78 * scale, 0);
+            sparkle(x + 13 * scale, y - 37 * scale, "#ffc928", now / 90 + distance, 6);
             ctx.restore();
           }
         }
@@ -244,10 +265,10 @@
       }
       function drawBathroom(now, intro = false) {
         tilePattern();
-        // Tub and green curtain
-        box(19, 173, 104, 51, "#faffff", "#9fc7d2"); box(26, 180, 90, 36, "#addce8"); box(18, 166, 108, 12, "#fff", "#9fc7d2");
-        box(22, 132, 98, 9, "#5e9d72"); box(22, 141, 98, 28, "#70ad7e");
-        for (let x = 30; x < 113; x += 16) box(x, 141, 4, 26, "#83bc88");
+        // Enlarged tub and green curtain
+        box(10, 174, 136, 55, "#faffff", "#9fc7d2"); box(18, 183, 120, 38, "#addce8"); box(8, 166, 140, 12, "#fff", "#9fc7d2");
+        box(14, 117, 128, 10, "#5e9d72"); box(14, 127, 128, 40, "#70ad7e");
+        for (let x = 22; x < 138; x += 16) box(x, 127, 4, 38, "#83bc88");
         // Sink and mirror
         box(364, 56, 75, 58, "#a9d8e3", "#9bc5ce"); box(369, 61, 65, 48, "#efffff");
         sparkle(384, 74, "#fff", now / 300); sparkle(421, 93, "#fff", now / 300 + 2);
