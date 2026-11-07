@@ -9,7 +9,7 @@
       const foodModes = {
         rice: { name: "Rice", label: "EASY MODE", time: 2, color: "#68402c", kind: "classic" },
         corn: { name: "Corn", label: "HARD MODE", time: 10.43 / 3, color: "#242127", kind: "corn" },
-        beet: { name: "Beetroot", label: "NORMAL MODE", time: 1.5, color: "#c53654", kind: "beet" },
+        beet: { name: "Beetroot", label: "NORMAL MODE", time: 1.5, color: "#ff1744", kind: "beet" },
         dragon: { name: "Dragon Fruit", label: "EXPERT MODE", time: 3.14 / 3, color: "#f0d743", kind: "dragon" }
       };
       let scene = "title";
