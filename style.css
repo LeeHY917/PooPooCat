@@ -30,16 +30,29 @@
       background: #8d5d35;
       box-shadow: 0 8px 0 #684127, 0 12px 24px #785a3255;
     }
-    canvas {
+    .game-stage {
+      position: relative;
       width: 100%;
-      height: auto;
       aspect-ratio: 8 / 5;
+    }
+    .game-stage canvas {
+      width: 100%;
+      height: 100%;
       display: block;
       border: 3px solid #654529;
+      position: absolute;
+      inset: 0;
+      touch-action: none;
+    }
+    #game {
       background: #fff0b5;
       image-rendering: pixelated;
-      touch-action: none;
       cursor: pointer;
+    }
+    #text-layer {
+      border-color: transparent;
+      image-rendering: auto;
+      pointer-events: none;
     }
     .hint { margin: 16px 4px 0; font-size: clamp(12px, 2vw, 15px); line-height: 1.5; }
     .hint strong { color: #93531c; }

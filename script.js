@@ -1,6 +1,8 @@
     (() => {
       const canvas = document.querySelector("#game");
       const ctx = canvas.getContext("2d");
+      const textCanvas = document.querySelector("#text-layer");
+      const textCtx = textCanvas.getContext("2d");
       const hint = document.querySelector("#hint");
       const W = canvas.width, H = canvas.height;
       const PIXEL_GRID = 2;
@@ -21,6 +23,8 @@
       let result = "";
       let sceneStartedAt = performance.now();
       let audioContext;
+      let bgmTimer;
+      let bgmStep = 0;
       let lastFrame = 0;
       const buttons = {
         start: { x: 176, y: 242, w: 128, h: 38 },
@@ -32,6 +36,7 @@
         try {
           audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
           if (audioContext.state === "suspended") audioContext.resume();
+          startBgm();
           const osc = audioContext.createOscillator();
           const gain = audioContext.createGain();
           osc.connect(gain); gain.connect(audioContext.destination);
@@ -45,6 +50,23 @@
         } catch (_) {}
       }
 
+      function startBgm() {
+        if (bgmTimer || !audioContext) return;
+        const melody = [523.25, 659.25, 783.99, 659.25, 587.33, 698.46, 880, 698.46];
+        bgmTimer = window.setInterval(() => {
+          if (audioContext.state !== "running") return;
+          const osc = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          osc.type = "square";
+          osc.frequency.value = melody[bgmStep++ % melody.length];
+          gain.gain.setValueAtTime(.0001, audioContext.currentTime);
+          gain.gain.exponentialRampToValueAtTime(.012, audioContext.currentTime + .025);
+          gain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + .22);
+          osc.connect(gain); gain.connect(audioContext.destination);
+          osc.start(); osc.stop(audioContext.currentTime + .23);
+        }, 280);
+      }
+
       function box(x, y, w, h, color, stroke) {
         const snap = value => Math.round(value / PIXEL_GRID) * PIXEL_GRID;
         const left = snap(x), top = snap(y);
@@ -54,15 +76,23 @@
       }
       function pixelText(text, x, y, size = 10, color = "#59402e", align = "center", outline = null) {
         const readableSize = Math.max(size, size <= 8 ? 8 : 10);
-        ctx.save();
-        ctx.font = `600 ${readableSize}px Arial, "Noto Sans TC", "Microsoft JhengHei", sans-serif`;
-        ctx.textAlign = align;
-        ctx.textBaseline = "middle";
-        ctx.letterSpacing = ".2px";
-        if (outline) { ctx.lineWidth = 3; ctx.strokeStyle = outline; ctx.strokeText(text, x, y); }
-        ctx.fillStyle = color;
-        ctx.fillText(text, x, y);
-        ctx.restore();
+        const transform = ctx.getTransform();
+        const scaleX = textCanvas.width / W, scaleY = textCanvas.height / H;
+        textCtx.save();
+        textCtx.setTransform(
+          transform.a * scaleX, transform.b * scaleY,
+          transform.c * scaleX, transform.d * scaleY,
+          transform.e * scaleX, transform.f * scaleY
+        );
+        textCtx.globalAlpha = ctx.globalAlpha;
+        textCtx.font = `600 ${readableSize}px Arial, "Noto Sans TC", "Microsoft JhengHei", sans-serif`;
+        textCtx.textAlign = align;
+        textCtx.textBaseline = "middle";
+        textCtx.letterSpacing = ".2px";
+        if (outline) { textCtx.lineWidth = 3; textCtx.strokeStyle = outline; textCtx.strokeText(text, x, y); }
+        textCtx.fillStyle = color;
+        textCtx.fillText(text, x, y);
+        textCtx.restore();
       }
       function button(rect, label, active = false) {
         box(rect.x, rect.y + 4, rect.w, rect.h, "#94601f");
@@ -153,6 +183,8 @@
           box(-12, -8, 24, 22, "#bd3653"); box(-8, -13, 16, 8, "#db5265"); box(-2, 12, 4, 7, "#628c4a"); box(-8, -14, 7, 6, "#7ca85a"); box(2, -15, 7, 7, "#7ca85a");
         } else {
           box(-16, -11, 32, 22, "#ed8794"); box(-12, -15, 24, 8, "#ffdce0"); box(-11, 10, 22, 6, "#8e594c");
+          box(-13, -17, 7, 4, "#4f9b58"); box(-7, -19, 7, 4, "#68b75b"); box(0, -19, 7, 4, "#4f9b58"); box(7, -17, 7, 4, "#68b75b");
+          box(-18, -9, 4, 9, "#4f9b58"); box(14, -9, 4, 9, "#4f9b58");
           for (const [sx, sy] of [[-8,-4],[2,-6],[8,2],[-2,5],[5,-1]]) box(sx, sy, 2, 2, "#34313a");
         }
         ctx.restore();
@@ -400,6 +432,7 @@
             pushExpired = true; finish(false);
           }
         }
+        textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
         if (scene === "title") drawTitle(now);
         else if (scene === "food") drawFood(now);
         else if (scene === "eating") drawFood(now, true);

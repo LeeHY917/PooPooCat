@@ -10,7 +10,12 @@
 <body>
   <main>
     <h1>POO POO CAT</h1>
-    <div class="frame"><canvas id="game" width="480" height="300" aria-label="Poo Poo Cat pixel-art game"></canvas></div>
+    <div class="frame">
+      <div class="game-stage">
+        <canvas id="game" width="480" height="300" aria-label="Poo Poo Cat pixel-art game"></canvas>
+        <canvas id="text-layer" width="960" height="600" aria-hidden="true"></canvas>
+      </div>
+    </div>
     <p class="hint" id="hint"><strong>Click Start</strong> or press <strong>Space</strong> · Choose a food · Hold <strong>Push!</strong> and release in the green zone</p>
   </main>
   <script src="script.js" defer></script>
