@@ -19,6 +19,7 @@
       let pushStartedAt = 0;
       let lastTapAt = 0;
       let fastPressCount = 0;
+      let fastPressZoneEnteredAt = 0;
       let playStartedAt = 0;
       let pushing = false;
       let result = "";
@@ -538,6 +539,7 @@
         pixelText("✦  POP!  ✦", 116, 118, 9, "#db8b44", "center", "#fff");
         pixelText("✦  POP!  ✦", 364, 118, 9, "#db8b44", "center", "#fff");
         pixelText("Congratulations!", 240, 199, 21, "#a96716", "center", "#fff");
+        drawPoop(food.kind, 240, 199, 2);
         pixelText("Perfect aim! The target is yours!", 240, 223, 9, "#6c543d", "center", "#fff");
         pixelText(`POOPS: ${poops.length}`, 240, 26, 10, "#59402e", "center", "#fff");
         button(buttons.restart, "R to Restart");
@@ -550,7 +552,11 @@
         resultCat(240, 168, 1.25, true, "frown");
         pixelText("OOPS!", 240, 224, 11, "#6792c5", "center", "#fff");
         pixelText("Fail", 240, 253, 23, "#6587b0", "center", "#fff");
-        pixelText(progress < meterZone().start ? "Not quite enough!" : "Too much oomph!", 240, 276, 9, "#6783a2", "center", "#fff");
+        const zone = meterZone();
+        const message = playMode === "tap" && progress >= zone.start && progress <= zone.end
+          ? "Stay in the green zone!"
+          : progress < zone.start ? "Not quite enough!" : "Too much oomph!";
+        pixelText(message, 240, 276, 9, "#6783a2", "center", "#fff");
         pixelText(`POOPS: ${poops.length}`, 240, 26, 10, "#59402e", "center", "#fff");
         button(buttons.restart, "R to Restart");
       }
@@ -560,12 +566,12 @@
         else if (scene === "eating" || scene === "transition") hint.innerHTML = "Yum! Your angel cat is getting ready...";
         else if (scene === "play") hint.innerHTML = playMode === "hold"
           ? "Hold to make the poop wiggle continuously; release to stop. The run ends after 10 seconds."
-          : "Every click or tap creates one poop immediately. No hold required; every three presses advances one step. The run ends after 10 seconds.";
+          : "Every click creates one poop; every three presses advances one step. Stay in the green zone for 3 seconds to win, or keep pressing to skip it. The run ends after 10 seconds.";
         else if (scene === "result") hint.innerHTML = result === "success" ? "A sparkling success! Press <strong>R</strong> to restart." : "Try another food and press <strong>R</strong> to restart.";
       }
       function finish(success) {
         if (scene !== "play") return;
-        pushing = false; result = success ? "success" : "fail"; scene = "result"; sceneStartedAt = performance.now();
+        pushing = false; fastPressZoneEnteredAt = 0; result = success ? "success" : "fail"; scene = "result"; sceneStartedAt = performance.now();
         sound("splat"); updateHint();
       }
       function settleProgress() {
@@ -604,8 +610,9 @@
           sound("tap");
           if (fastPressCount % 3 === 0) {
             progress = Math.min(1, progress + .04);
-            if (progress >= meterZone().start && progress <= meterZone().end) finish(true);
-            else if (progress > meterZone().end) finish(false);
+            const zone = meterZone();
+            if (progress > zone.end) finish(false);
+            else if (progress >= zone.start && !fastPressZoneEnteredAt) fastPressZoneEnteredAt = now;
           }
           return;
         }
@@ -622,11 +629,11 @@
       function beginFood(key) {
         food = { ...foodModes[key] };
         if (key === "dragon") food.time = .6 + Math.random() * .8;
-        scene = "eating"; sceneStartedAt = performance.now(); progress = 0; lastTapAt = 0; fastPressCount = 0; playStartedAt = 0; poops = [];
+        scene = "eating"; sceneStartedAt = performance.now(); progress = 0; lastTapAt = 0; fastPressCount = 0; fastPressZoneEnteredAt = 0; playStartedAt = 0; poops = [];
         sound("tap"); updateHint();
       }
       function restart() {
-        scene = "title"; progress = 0; pushing = false; lastTapAt = 0; fastPressCount = 0; playStartedAt = 0; poops = []; result = ""; sceneStartedAt = performance.now(); updateHint();
+        scene = "title"; progress = 0; pushing = false; lastTapAt = 0; fastPressCount = 0; fastPressZoneEnteredAt = 0; playStartedAt = 0; poops = []; result = ""; sceneStartedAt = performance.now(); updateHint();
       }
       function point(event) {
         const rect = canvas.getBoundingClientRect();
@@ -678,10 +685,19 @@
         } else if (scene === "transition" && now - sceneStartedAt >= 4000) {
           sound("flush"); scene = "play"; sceneStartedAt = now; playStartedAt = now; updateHint();
         }
-        if (scene === "play" && !pushing && playMode === "tap" && lastTapAt && now - lastTapAt >= 500) settleProgress();
+        if (scene === "play" && !pushing && playMode === "tap" && lastTapAt && now - lastTapAt >= 500) {
+          const zone = meterZone();
+          if (progress < zone.start) settleProgress();
+        }
         if (scene === "play" && playStartedAt && now - playStartedAt >= 10000) {
           if (pushing && playMode === "hold") progress = longPressProgress(now);
-          settleProgress();
+          if (playMode === "tap") {
+            const zone = meterZone();
+            finish(progress >= zone.start && progress <= zone.end && fastPressZoneEnteredAt && now - fastPressZoneEnteredAt >= 3000);
+          } else settleProgress();
+        }
+        if (scene === "play" && playMode === "tap" && fastPressZoneEnteredAt && now - fastPressZoneEnteredAt >= 3000) {
+          finish(true);
         }
         textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
         if (scene === "title") drawTitle(now);
