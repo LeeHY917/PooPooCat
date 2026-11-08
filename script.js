@@ -14,6 +14,7 @@
       };
       let scene = "title";
       let food = foodModes.rice;
+      let playMode = "hold";
       let progress = 0;
       let pushStartedAt = 0;
       let pushAccumulated = 0;
@@ -23,18 +24,33 @@
       let result = "";
       let sceneStartedAt = performance.now();
       let audioContext;
+      let masterGain;
+      let audioMuted = false;
       let bgmTimer;
       let bgmStep = 0;
       let lastFrame = 0;
       const buttons = {
-        start: { x: 176, y: 242, w: 128, h: 38 },
+        start: { x: 176, y: 248, w: 128, h: 34 },
+        longPress: { x: 54, y: 211, w: 180, h: 28 },
+        keepPressing: { x: 246, y: 211, w: 180, h: 28 },
+        speaker: { x: 430, y: 8, w: 40, h: 30 },
         push: { x: 161, y: 244, w: 130, h: 40 },
         restart: { x: 355, y: 246, w: 112, h: 38 }
       };
 
+      function ensureAudio() {
+        audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+        if (!masterGain) {
+          masterGain = audioContext.createGain();
+          masterGain.gain.value = audioMuted ? 0 : .18;
+          masterGain.connect(audioContext.destination);
+        }
+      }
+
       function sound(kind) {
         try {
-          audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+          if (audioMuted) return;
+          ensureAudio();
           if (audioContext.state === "suspended") audioContext.resume();
           startBgm();
           if (kind === "meow") {
@@ -48,7 +64,7 @@
               gain.gain.setValueAtTime(.0001, now + offset);
               gain.gain.exponentialRampToValueAtTime(.08, now + offset + .025);
               gain.gain.exponentialRampToValueAtTime(.0001, now + offset + duration);
-              osc.connect(gain); gain.connect(audioContext.destination);
+              osc.connect(gain); gain.connect(masterGain);
               osc.start(now + offset); osc.stop(now + offset + duration);
             });
             return;
@@ -64,14 +80,14 @@
               gain.gain.setValueAtTime(.0001, now + offset);
               gain.gain.exponentialRampToValueAtTime(offset ? .1 : .07, now + offset + .02);
               gain.gain.exponentialRampToValueAtTime(.0001, now + offset + duration);
-              osc.connect(gain); gain.connect(audioContext.destination);
+              osc.connect(gain); gain.connect(masterGain);
               osc.start(now + offset); osc.stop(now + offset + duration);
             });
             return;
           }
           const osc = audioContext.createOscillator();
           const gain = audioContext.createGain();
-          osc.connect(gain); gain.connect(audioContext.destination);
+          osc.connect(gain); gain.connect(masterGain);
           const now = audioContext.currentTime;
           osc.type = kind === "flush" ? "sawtooth" : "square";
           osc.frequency.setValueAtTime(kind === "flush" ? 280 : 760, now);
@@ -95,7 +111,7 @@
           gain.gain.setValueAtTime(.0001, audioContext.currentTime);
           gain.gain.exponentialRampToValueAtTime(.018, audioContext.currentTime + .025);
           gain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + .2);
-          osc.connect(gain); gain.connect(audioContext.destination);
+          osc.connect(gain); gain.connect(masterGain);
           osc.start(); osc.stop(audioContext.currentTime + .21);
           if (step % 4 === 3 && !(scene === "play" && pushing)) {
             const plop = audioContext.createOscillator();
@@ -106,7 +122,7 @@
             plopGain.gain.setValueAtTime(.0001, audioContext.currentTime);
             plopGain.gain.exponentialRampToValueAtTime(.035, audioContext.currentTime + .012);
             plopGain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + .15);
-            plop.connect(plopGain); plopGain.connect(audioContext.destination);
+            plop.connect(plopGain); plopGain.connect(masterGain);
             plop.start(); plop.stop(audioContext.currentTime + .16);
           }
         }, 280);
@@ -144,6 +160,31 @@
         box(rect.x, rect.y, rect.w, rect.h, active ? "#f5bd43" : "#ffd766", "#fff4bf");
         box(rect.x + 5, rect.y + 4, rect.w - 10, 3, "#fff1b1");
         pixelText(label, rect.x + rect.w / 2, rect.y + rect.h / 2 + 1, 15, "#80501e");
+      }
+      function drawSpeaker() {
+        const { x, y, w, h } = buttons.speaker;
+        box(x, y, w, h, "#fff8df", "#b48743");
+        box(x + 7, y + 11, 6, 8, "#80501e");
+        box(x + 13, y + 7, 5, 16, "#80501e");
+        if (audioMuted) {
+          box(x + 23, y + 7, 11, 16, "#d95659");
+          pixelText("×", x + 28, y + 15, 13, "#fff");
+        } else {
+          box(x + 21, y + 9, 2, 12, "#80501e");
+          box(x + 25, y + 6, 2, 18, "#80501e");
+          box(x + 29, y + 11, 2, 8, "#80501e");
+        }
+      }
+      function toggleSound() {
+        audioMuted = !audioMuted;
+        try {
+          ensureAudio();
+          masterGain.gain.setTargetAtTime(audioMuted ? 0 : .18, audioContext.currentTime, .02);
+          if (!audioMuted) {
+            if (audioContext.state === "suspended") audioContext.resume();
+            startBgm();
+          }
+        } catch (_) {}
       }
       function sparkle(x, y, color = "#fffbe1", phase = 0, size = 6) {
         const s = size + (Math.sin(phase) + 1) * 2;
@@ -244,8 +285,10 @@
           }
         }
         for (let i = 0; i < 8; i++) sparkle(31 + i * 60, 104 + Math.sin(now / 250 + i) * 10, "#ffc928", now / 240 + i);
+        button(buttons.longPress, "LONG PRESS", playMode === "hold");
+        button(buttons.keepPressing, "KEEP PRESSING", playMode === "tap");
         button(buttons.start, "Start!");
-        pixelText("SPACE OR CLICK TO BEGIN", 240, 292, 8, "#8d693f");
+        pixelText("CHOOSE A PLAY STYLE · SPACE TO START", 240, 293, 8, "#8d693f");
       }
       function foodIcon(kind, x, y, scale = 1) {
         ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
@@ -415,9 +458,12 @@
         box(197, 189, 86, 8, "#8bd5e6");
         drawPoop(food.kind, 322, 39 + progress * 132, 1.35, Math.sin(now / 120) * (pushing ? 2 : 1));
         drawMeter();
-        pixelText(pushing ? "KEEP HOLDING!" : "HOLD, THEN RELEASE IN GREEN", 226, 231, 7, "#584638");
-        button(buttons.push, pushing ? "PUSHING..." : "Push!", pushing);
-        pixelText("A pause over 1 second ends the run!", 226, 294, 7, "#765a44");
+        const instruction = playMode === "hold"
+          ? (pushing ? "KEEP HOLDING!" : "HOLD, THEN RELEASE IN GREEN")
+          : "KEEP TAPPING TO REACH THE GREEN ZONE";
+        pixelText(instruction, 226, 231, 7, "#584638");
+        button(buttons.push, pushing ? "PUSHING..." : playMode === "hold" ? "Push!" : "Tap!", pushing);
+        pixelText(playMode === "hold" ? "A pause over 1 second ends the run!" : "Tap repeatedly; take your time!", 226, 294, 7, "#765a44");
       }
       function drawBathroomTransition(now) {
         const elapsed = now - sceneStartedAt;
@@ -452,10 +498,12 @@
         button(buttons.restart, "Restart!");
       }
       function updateHint() {
-        if (scene === "title") hint.innerHTML = "<strong>Click Start</strong> or press <strong>Space</strong> · Choose a food · Hold <strong>Push!</strong> and release in the green zone";
+        if (scene === "title") hint.innerHTML = "Choose <strong>Long Press</strong> or <strong>Keep Pressing</strong>, then click Start or press <strong>Space</strong> · <strong>M</strong> toggles sound";
         else if (scene === "food") hint.innerHTML = "Pick a dish to feed your angel cat. Each food changes your challenge!";
         else if (scene === "eating" || scene === "transition") hint.innerHTML = "Yum! Your angel cat is getting ready...";
-        else if (scene === "play") hint.innerHTML = "Hold the button or Spacebar, then release when the marker reaches the green <strong>0.3 kg</strong> target.";
+        else if (scene === "play") hint.innerHTML = playMode === "hold"
+          ? "Hold the button or Spacebar, then release when the marker reaches the green <strong>0.3 kg</strong> target."
+          : "Tap the button or Spacebar repeatedly to move the marker into the green <strong>0.3 kg</strong> target.";
         else if (scene === "result") hint.innerHTML = result === "success" ? "A sparkling success! Click Restart or press Space to play again." : "Try another food and find your rhythm. Click Restart or press Space.";
       }
       function finish(success) {
@@ -465,6 +513,14 @@
       }
       function startPush() {
         if (scene !== "play" || pushing || pushExpired) return;
+        if (playMode === "tap") {
+          progress = Math.min(1, progress + .025);
+          sound("tap");
+          const zone = meterZone();
+          if (progress >= zone.start && progress <= zone.end) finish(true);
+          else if (progress > zone.end) finish(false);
+          return;
+        }
         if (lastPushAt && performance.now() - lastPushAt > 1000) { pushExpired = true; finish(false); return; }
         pushing = true; pushStartedAt = performance.now(); sound("tap");
       }
@@ -494,7 +550,10 @@
       function inside(p, r) { return p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h; }
       canvas.addEventListener("pointerdown", event => {
         const p = point(event); canvas.setPointerCapture(event.pointerId);
-        if (scene === "title" && inside(p, buttons.start)) { scene = "food"; sceneStartedAt = performance.now(); sound("tap"); updateHint(); }
+        if (inside(p, buttons.speaker)) toggleSound();
+        else if (scene === "title" && inside(p, buttons.longPress)) playMode = "hold";
+        else if (scene === "title" && inside(p, buttons.keepPressing)) playMode = "tap";
+        else if (scene === "title" && inside(p, buttons.start)) { scene = "food"; sceneStartedAt = performance.now(); sound("tap"); updateHint(); }
         else if (scene === "food") {
           if (p.y >= 206 && p.y <= 276) {
             if (p.x >= 48 && p.x < 141) beginFood("corn");
@@ -513,6 +572,10 @@
         if (document.hidden) stopPush();
       });
       window.addEventListener("keydown", event => {
+        if (event.code === "KeyM" && !event.repeat) {
+          toggleSound();
+          return;
+        }
         if (event.code !== "Space" || event.repeat) return;
         event.preventDefault();
         if (scene === "title") { scene = "food"; sceneStartedAt = performance.now(); sound("tap"); updateHint(); }
@@ -531,7 +594,7 @@
           if (pushing) {
             const seconds = (pushAccumulated + now - pushStartedAt) / 1000;
             progress = Math.min(1, seconds / food.time * (7 / 12));
-          } else if (lastPushAt && now - lastPushAt > 1000) {
+          } else if (playMode === "hold" && lastPushAt && now - lastPushAt > 1000) {
             pushExpired = true; finish(false);
           }
         }
@@ -542,6 +605,7 @@
         else if (scene === "transition") drawBathroomTransition(now);
         else if (scene === "play") drawPlay(now);
         else if (scene === "result") result === "success" ? drawSuccess(now) : drawFail(now);
+        drawSpeaker();
         lastFrame = now; requestAnimationFrame(frame);
       }
       updateHint(); requestAnimationFrame(frame);
