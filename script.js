@@ -19,9 +19,11 @@
       let pushStartedAt = 0;
       let pushAccumulated = 0;
       let lastPushAt = 0;
+      let lastTapAt = 0;
       let pushing = false;
       let pushExpired = false;
       let result = "";
+      let poops = [];
       let sceneStartedAt = performance.now();
       let audioContext;
       let masterGain;
@@ -247,15 +249,15 @@
         }
         ctx.restore();
       }
-      function background(color = "#fff0b5") {
+      function background(color = "#e7f4ff") {
         box(0, 0, W, H, color);
-        box(0, 260, W, 40, "#f6d98b");
+        box(0, 260, W, 40, "#c9e4f2");
         for (let x = 10; x < W; x += 32) for (let y = 12; y < 250; y += 28) {
           if ((x + y) % 4 === 0) sparkle(x, y, "#ffc928", x * .2 + y);
         }
       }
       function drawTitle(now) {
-        background("#fff0b5");
+        background();
         pixelText("A TINY ANGEL CAT ADVENTURE", 240, 32, 9, "#a4793c");
         pixelText("Poo Poo Cat", 240, 69, 31, "#a96716", "center", "#fff");
         // Each pair of cats repeats the center cat's gesture with an outward delay.
@@ -309,8 +311,8 @@
         ctx.restore();
       }
       function drawFood(now, eating = false) {
-        background("#fff0b5");
-        box(0, 0, W, 40, "#f9df98");
+        background();
+        box(0, 0, W, 40, "#d5ecfa");
         pixelText("Food for Poop", 240, 65, 23, "#a96716", "center", "#fff");
         const decorateX = 92 + ((Math.sin(now / 1700) + 1) * 90);
         pixelText("Decorate your Poop", decorateX, 88, 10, "#ff1744", "center", "#fff5b8");
@@ -428,19 +430,33 @@
         return { start: center - halfWidth, end: center + halfWidth };
       }
       function drawGameTwoRoom(now) {
-        box(0, 0, W, H, "#dceef2");
+        box(0, 0, W, H, "#e5f3fc");
         for (let y = 0; y < 224; y += 32) for (let x = 0; x < W; x += 48) {
-          box(x, y, 46, 30, "#f9ffff", "#c5e0e8");
-          box(x + 2, y + 2, 42, 26, "#fff");
+          box(x, y, 46, 30, "#d2e8f5", "#bdd9e8");
+          box(x + 2, y + 2, 42, 26, "#eaf6fd");
         }
-        box(0, 260, W, 40, "#b8d8e2");
-        for (let x = 0; x < W; x += 48) box(x, 260, 46, 38, "#c8e3e9", "#a9cdd7");
-        // A close view of the closed toilet keeps this scene focused on the cat and meter.
-        box(170, 214, 140, 13, "#fff", "#9cbfc8");
-        box(184, 225, 112, 31, "#fff", "#9cbfc8");
-        box(194, 248, 92, 12, "#d9e8e9");
-        box(164, 207, 152, 11, "#eefbfc", "#91bfc9");
-        cat(239, 185, .78, false, "frown");
+        box(0, 260, W, 40, "#c2deed");
+        for (let x = 0; x < W; x += 48) box(x, 260, 46, 38, "#d5eaf5", "#b4d2e1");
+        ctx.save();
+        ctx.fillStyle = "#b7d0de";
+        ctx.beginPath(); ctx.ellipse(241, 259, 91, 9, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+        // Enlarged close-up toilet with a raised cistern, porcelain bowl, seat, and water.
+        box(177, 69, 126, 87, "#f8fdff", "#9bbbc9");
+        box(184, 76, 112, 73, "#fff", "#d0e3eb");
+        box(190, 83, 100, 4, "#e2eff4");
+        box(250, 88, 14, 4, "#b6cbd3");
+        box(250, 92, 14, 3, "#e8f2f5");
+        box(188, 148, 104, 13, "#d8e8ee", "#9bbbc9");
+        box(184, 159, 112, 19, "#fff", "#93b7c7");
+        box(194, 163, 92, 10, "#e8f7fb");
+        box(177, 174, 126, 18, "#fcffff", "#9bbbc9");
+        box(183, 180, 114, 7, "#b8e4ed");
+        box(185, 190, 110, 53, "#f7fcfe", "#9bbbc9");
+        box(192, 198, 96, 38, "#fff", "#d3e4ea");
+        box(203, 236, 74, 19, "#e5f0f3", "#9bbbc9");
+        box(211, 250, 58, 7, "#c6dce4");
+        cat(239, 166, .78, false, "frown");
         for (let i = 0; i < 5; i++) sparkle(164 + i * 36, 82 + (i % 2) * 32, "#fff", now / 190 + i, 4);
       }
       function drawPlay(now) {
@@ -455,7 +471,8 @@
           ctx.globalAlpha = 1;
         }
         // Toilet water and the food-specific poop emerging from the top center
-        box(197, 189, 86, 8, "#8bd5e6");
+        box(197, 181, 86, 8, "#8bd5e6");
+        poops.forEach(poop => drawPoop(poop.kind, poop.x, poop.y, poop.scale, 0));
         drawPoop(food.kind, 322, 39 + progress * 132, 1.35, Math.sin(now / 120) * (pushing ? 2 : 1));
         drawMeter();
         const instruction = playMode === "hold"
@@ -469,16 +486,38 @@
         const elapsed = now - sceneStartedAt;
         const progress = Math.min(1, Math.max(0, (elapsed - 2400) / 600));
         const eased = 1 - (1 - progress) ** 3;
+        const zoom = 1 + .3 * Math.min(1, elapsed / 2400);
+        ctx.save();
+        ctx.translate(W / 2, 156);
+        ctx.scale(zoom, zoom);
+        ctx.translate(-W / 2, -156);
         drawBathroom(now, true);
+        ctx.restore();
         if (progress > 0) {
+          const panelX = W * (1 - eased);
           ctx.save();
-          ctx.translate(W * (1 - eased), 0);
+          ctx.translate(panelX, 0);
           drawPlay(now);
+          for (let i = 0; i < 5; i++) {
+            const y = (i * 61 + elapsed * .18) % H;
+            cat(14, y, .23, false, "dance");
+          }
           ctx.restore();
         }
       }
+      function drawResultPoops() {
+        if (!poops.length) return;
+        const columns = 8, rows = 6;
+        for (let i = 0; i < columns * rows; i++) {
+          const poop = poops[i % poops.length];
+          const x = 29 + (i % columns) * 60;
+          const y = 27 + Math.floor(i / columns) * 49;
+          drawPoop(poop.kind, x, y, Math.max(.45, poop.scale * .82), 0);
+        }
+      }
       function drawSuccess(now) {
-        background("#fff2b0");
+        background("#dceeff");
+        drawResultPoops();
         for (let i = 0; i < 18; i++) sparkle(12 + i * 27, 20 + ((i * 39) % 228), "#fff", now / 80 + i);
         cat(116, 179, .75, false, "dance"); cat(364, 179, .75, false, "dance");
         pixelText("✦  POP!  ✦", 116, 118, 9, "#db8b44"); pixelText("✦  POP!  ✦", 364, 118, 9, "#db8b44");
@@ -489,6 +528,7 @@
       }
       function drawFail(now) {
         background("#dfeeff");
+        drawResultPoops();
         box(0, 0, W, 250, "#e8f4ff");
         for (let i = 0; i < 7; i++) pixelText("〰", 70 + i * 57, 55 + Math.sin(now / 250 + i) * 9, 17, "#80a8da");
         cat(240, 168, 1.25, true, "frown");
@@ -511,14 +551,22 @@
         pushing = false; result = success ? "success" : "fail"; scene = "result"; sceneStartedAt = performance.now();
         sound("splat"); updateHint();
       }
+      function dropPoop() {
+        const index = poops.length;
+        poops.push({
+          kind: food.kind,
+          x: 183 + (index % 5) * 32,
+          y: 207 + Math.floor(index / 5) * 13,
+          scale: Math.max(.35, 1.15 - index * .035)
+        });
+      }
       function startPush() {
         if (scene !== "play" || pushing || pushExpired) return;
         if (playMode === "tap") {
           progress = Math.min(1, progress + .025);
+          dropPoop();
+          lastTapAt = performance.now();
           sound("tap");
-          const zone = meterZone();
-          if (progress >= zone.start && progress <= zone.end) finish(true);
-          else if (progress > zone.end) finish(false);
           return;
         }
         if (lastPushAt && performance.now() - lastPushAt > 1000) { pushExpired = true; finish(false); return; }
@@ -529,6 +577,7 @@
         const now = performance.now();
         pushAccumulated += now - pushStartedAt;
         progress = Math.min(1, pushAccumulated / 1000 / food.time * (7 / 12));
+        dropPoop();
         pushing = false; lastPushAt = now;
         const zone = meterZone();
         if (progress >= zone.start && progress <= zone.end) finish(true);
@@ -537,11 +586,11 @@
       function beginFood(key) {
         food = { ...foodModes[key] };
         if (key === "dragon") food.time = .6 + Math.random() * .8;
-        scene = "eating"; sceneStartedAt = performance.now(); progress = 0; pushAccumulated = 0; lastPushAt = 0; pushExpired = false;
+        scene = "eating"; sceneStartedAt = performance.now(); progress = 0; pushAccumulated = 0; lastPushAt = 0; lastTapAt = 0; poops = []; pushExpired = false;
         sound("tap"); updateHint();
       }
       function restart() {
-        scene = "title"; progress = 0; pushAccumulated = 0; pushing = false; lastPushAt = 0; pushExpired = false; result = ""; sceneStartedAt = performance.now(); updateHint();
+        scene = "title"; progress = 0; pushAccumulated = 0; pushing = false; lastPushAt = 0; lastTapAt = 0; poops = []; pushExpired = false; result = ""; sceneStartedAt = performance.now(); updateHint();
       }
       function point(event) {
         const rect = canvas.getBoundingClientRect();
@@ -594,6 +643,9 @@
           if (pushing) {
             const seconds = (pushAccumulated + now - pushStartedAt) / 1000;
             progress = Math.min(1, seconds / food.time * (7 / 12));
+          } else if (playMode === "tap" && lastTapAt && now - lastTapAt >= 500) {
+            const zone = meterZone();
+            finish(progress >= zone.start && progress <= zone.end);
           } else if (playMode === "hold" && lastPushAt && now - lastPushAt > 1000) {
             pushExpired = true; finish(false);
           }
