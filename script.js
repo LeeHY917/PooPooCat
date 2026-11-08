@@ -483,7 +483,7 @@
         button(buttons.push, pressLabel, pushing);
         const remaining = playStartedAt ? Math.max(0, 10 - (now - playStartedAt) / 1000) : 10;
         pixelText(`TIME ${remaining.toFixed(1)}s`, 63, 48, 9, "#bd3d50", "left", "#fff");
-        pixelText(playMode === "hold" ? "Hold to wiggle, release to stop." : `One step every 3 clicks (${fastPressCount % 3}/3). No hold required.`, 226, 294, 7, "#765a44");
+        pixelText(playMode === "hold" ? "Hold to wiggle, release to stop." : No hold required.`, 226, 294, 7, "#765a44");
       }
       function drawBathroomTransition(now) {
         const elapsed = now - sceneStartedAt;
@@ -540,7 +540,7 @@
         pixelText("Congratulations!", 240, 199, 21, "#a96716", "center", "#fff");
         pixelText("Perfect aim! The target is yours!", 240, 223, 9, "#6c543d", "center", "#fff");
         pixelText(`POOPS: ${poops.length}`, 240, 26, 10, "#59402e", "center", "#fff");
-        button(buttons.restart, "Press R");
+        button(buttons.restart, "R to Restart");
       }
       function drawFail(now) {
         background("#dfeeff");
@@ -552,7 +552,7 @@
         pixelText("Fail", 240, 253, 23, "#6587b0", "center", "#fff");
         pixelText(progress < meterZone().start ? "Not quite enough!" : "Too much oomph!", 240, 276, 9, "#6783a2", "center", "#fff");
         pixelText(`POOPS: ${poops.length}`, 240, 26, 10, "#59402e", "center", "#fff");
-        button(buttons.restart, "Press R");
+        button(buttons.restart, "R to Restart");
       }
       function updateHint() {
         if (scene === "title") hint.innerHTML = "Choose <strong>Long Press</strong> or <strong>Fast Press</strong>, then click Start or press <strong>Space</strong> · <strong>M</strong> toggles sound";
