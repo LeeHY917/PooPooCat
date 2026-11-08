@@ -20,6 +20,7 @@
       let pushAccumulated = 0;
       let lastPushAt = 0;
       let lastTapAt = 0;
+      let ignoredTapUntil = 0;
       let pushing = false;
       let pushExpired = false;
       let result = "";
@@ -288,7 +289,7 @@
         }
         for (let i = 0; i < 8; i++) sparkle(31 + i * 60, 104 + Math.sin(now / 250 + i) * 10, "#ffc928", now / 240 + i);
         button(buttons.longPress, "LONG PRESS", playMode === "hold");
-        button(buttons.keepPressing, "KEEP PRESSING", playMode === "tap");
+        button(buttons.keepPressing, "KEEP PRESS", playMode === "tap");
         button(buttons.start, "Start!");
         pixelText("CHOOSE A PLAY STYLE · SPACE TO START", 240, 293, 8, "#8d693f");
       }
@@ -447,6 +448,7 @@
         box(190, 83, 100, 4, "#e2eff4");
         box(250, 88, 14, 4, "#b6cbd3");
         box(250, 92, 14, 3, "#e8f2f5");
+        box(204, 145, 72, 39, "#f8fdff", "#9bbbc9");
         box(188, 148, 104, 13, "#d8e8ee", "#9bbbc9");
         box(184, 159, 112, 19, "#fff", "#93b7c7");
         box(194, 163, 92, 10, "#e8f7fb");
@@ -476,16 +478,21 @@
         drawMeter();
         const instruction = playMode === "hold"
           ? (pushing ? "KEEP HOLDING!" : "HOLD, THEN RELEASE IN GREEN")
-          : "KEEP TAPPING TO REACH THE GREEN ZONE";
+          : pushing ? "HOLD FOR 1 SECOND TO COUNT"
+          : now < ignoredTapUntil ? "SHORT PRESS IGNORED; HOLD FOR 1 SECOND"
+          : "KEEP PRESSING; WAIT 0.5S TO SETTLE";
         pixelText(instruction, 226, 231, 7, "#584638");
-        button(buttons.push, pushing ? "PUSHING..." : playMode === "hold" ? "Push!" : "Tap!", pushing);
-        pixelText(playMode === "hold" ? "A pause over 1 second ends the run!" : "Tap repeatedly; take your time!", 226, 294, 7, "#765a44");
+        const pressLabel = playMode === "hold"
+          ? pushing ? "PUSHING..." : "Push!"
+          : pushing ? `HOLD ${(Math.max(0, 1000 - (now - pushStartedAt)) / 1000).toFixed(1)}s` : "Keep Press";
+        button(buttons.push, pressLabel, pushing);
+        pixelText(playMode === "hold" ? "A pause over 1 second ends the run!" : "Hold each press for 1 second or it won't count.", 226, 294, 7, "#765a44");
       }
       function drawBathroomTransition(now) {
         const elapsed = now - sceneStartedAt;
-        const progress = Math.min(1, Math.max(0, (elapsed - 2400) / 600));
+        const progress = Math.min(1, Math.max(0, (elapsed - 2800) / 1200));
         const eased = 1 - (1 - progress) ** 3;
-        const zoom = 1 + .3 * Math.min(1, elapsed / 2400);
+        const zoom = 1 + .3 * Math.min(1, elapsed / 2800);
         ctx.save();
         ctx.translate(W / 2, 156);
         ctx.scale(zoom, zoom);
@@ -497,32 +504,47 @@
           ctx.save();
           ctx.translate(panelX, 0);
           drawPlay(now);
-          for (let i = 0; i < 5; i++) {
-            const y = (i * 61 + elapsed * .18) % H;
-            cat(14, y, .23, false, "dance");
-          }
           ctx.restore();
+        }
+        for (let i = 0; i < 5; i++) {
+          const startAt = 200 + i * 190;
+          if (elapsed < startAt) continue;
+          const x = W + 30 - (elapsed - startAt) * .14;
+          const y = 252 - i * 41;
+          if (x > -20) cat(x, y, .23, false, "dance");
         }
       }
       function drawResultPoops() {
         if (!poops.length) return;
         const columns = 12, rows = 10;
+        ctx.save(); ctx.globalAlpha = .5;
         for (let i = 0; i < columns * rows; i++) {
           const poop = poops[i % poops.length];
           const x = 19 + (i % columns) * 40;
           const y = 16 + Math.floor(i / columns) * 30;
           drawPoop(poop.kind, x, y, Math.max(.8, poop.scale * 1.15), 0);
         }
+        ctx.restore();
+      }
+      function resultCat(x, y, scale, tired, pose) {
+        ctx.save(); ctx.shadowColor = "#fff"; ctx.shadowBlur = 7;
+        cat(x, y, scale, tired, pose);
+        ctx.restore();
+        cat(x, y, scale, tired, pose);
       }
       function drawSuccess(now) {
         background("#dceeff");
         drawResultPoops();
         for (let i = 0; i < 18; i++) sparkle(12 + i * 27, 20 + ((i * 39) % 228), "#fff", now / 80 + i);
-        cat(116, 179, .75, false, "dance"); cat(364, 179, .75, false, "dance");
-        pixelText("✦  POP!  ✦", 116, 118, 9, "#db8b44"); pixelText("✦  POP!  ✦", 364, 118, 9, "#db8b44");
+        resultCat(116, 179, .75, false, "dance"); resultCat(364, 179, .75, false, "dance");
+        pixelText("✦  POP!  ✦", 116, 118, 9, "#db8b44", "center", "#fff");
+        pixelText("✦  POP!  ✦", 364, 118, 9, "#db8b44", "center", "#fff");
+        ctx.save(); ctx.globalAlpha = .5;
         drawPoop(food.kind, 240, 138, 2.5, Math.sin(now / 100) * 2);
+        ctx.restore();
         pixelText("Congratulations!", 240, 199, 21, "#a96716", "center", "#fff");
-        pixelText("Perfect aim! The target is yours!", 240, 223, 9, "#6c543d");
+        pixelText("Perfect aim! The target is yours!", 240, 223, 9, "#6c543d", "center", "#fff");
+        pixelText(`POOPS: ${poops.length}`, 240, 26, 10, "#59402e", "center", "#fff");
         button(buttons.restart, "Restart!");
       }
       function drawFail(now) {
@@ -530,19 +552,20 @@
         box(0, 0, W, 250, "#e8f4ff");
         drawResultPoops();
         for (let i = 0; i < 7; i++) pixelText("〰", 70 + i * 57, 55 + Math.sin(now / 250 + i) * 9, 17, "#80a8da");
-        cat(240, 168, 1.25, true, "frown");
-        pixelText("OOPS!", 240, 224, 11, "#6792c5");
+        resultCat(240, 168, 1.25, true, "frown");
+        pixelText("OOPS!", 240, 224, 11, "#6792c5", "center", "#fff");
         pixelText("Fail", 240, 253, 23, "#6587b0", "center", "#fff");
-        pixelText(progress < meterZone().start ? "Not quite enough!" : "Too much oomph!", 240, 276, 9, "#6783a2");
+        pixelText(progress < meterZone().start ? "Not quite enough!" : "Too much oomph!", 240, 276, 9, "#6783a2", "center", "#fff");
+        pixelText(`POOPS: ${poops.length}`, 240, 26, 10, "#59402e", "center", "#fff");
         button(buttons.restart, "Restart!");
       }
       function updateHint() {
-        if (scene === "title") hint.innerHTML = "Choose <strong>Long Press</strong> or <strong>Keep Pressing</strong>, then click Start or press <strong>Space</strong> · <strong>M</strong> toggles sound";
+        if (scene === "title") hint.innerHTML = "Choose <strong>Long Press</strong> or <strong>Keep Press</strong>, then click Start or press <strong>Space</strong> · <strong>M</strong> toggles sound";
         else if (scene === "food") hint.innerHTML = "Pick a dish to feed your angel cat. Each food changes your challenge!";
         else if (scene === "eating" || scene === "transition") hint.innerHTML = "Yum! Your angel cat is getting ready...";
         else if (scene === "play") hint.innerHTML = playMode === "hold"
           ? "Hold the button or Spacebar, then release when the marker reaches the green <strong>0.3 kg</strong> target."
-          : "Tap the button or Spacebar repeatedly to move the marker into the green <strong>0.3 kg</strong> target.";
+          : "Hold the Keep Press button or Spacebar for at least one second per press. Release in the green zone, then wait half a second.";
         else if (scene === "result") hint.innerHTML = result === "success" ? "A sparkling success! Click Restart or press Space to play again." : "Try another food and find your rhythm. Click Restart or press Space.";
       }
       function finish(success) {
@@ -562,10 +585,8 @@
       function startPush() {
         if (scene !== "play" || pushing || pushExpired) return;
         if (playMode === "tap") {
-          progress = Math.min(1, progress + .025);
-          dropPoop();
-          lastTapAt = performance.now();
-          sound("tap");
+          pushing = true;
+          pushStartedAt = performance.now();
           return;
         }
         if (lastPushAt && performance.now() - lastPushAt > 1000) { pushExpired = true; finish(false); return; }
@@ -574,6 +595,18 @@
       function stopPush() {
         if (scene !== "play" || !pushing) return;
         const now = performance.now();
+        if (playMode === "tap") {
+          pushing = false;
+          if (now - pushStartedAt < 1000) {
+            ignoredTapUntil = now + 800;
+            return;
+          }
+          progress = Math.min(1, progress + .025);
+          dropPoop();
+          lastTapAt = now;
+          sound("tap");
+          return;
+        }
         pushAccumulated += now - pushStartedAt;
         progress = Math.min(1, pushAccumulated / 1000 / food.time * (7 / 12));
         dropPoop();
@@ -585,11 +618,11 @@
       function beginFood(key) {
         food = { ...foodModes[key] };
         if (key === "dragon") food.time = .6 + Math.random() * .8;
-        scene = "eating"; sceneStartedAt = performance.now(); progress = 0; pushAccumulated = 0; lastPushAt = 0; lastTapAt = 0; poops = []; pushExpired = false;
+        scene = "eating"; sceneStartedAt = performance.now(); progress = 0; pushAccumulated = 0; lastPushAt = 0; lastTapAt = 0; ignoredTapUntil = 0; poops = []; pushExpired = false;
         sound("tap"); updateHint();
       }
       function restart() {
-        scene = "title"; progress = 0; pushAccumulated = 0; pushing = false; lastPushAt = 0; lastTapAt = 0; poops = []; pushExpired = false; result = ""; sceneStartedAt = performance.now(); updateHint();
+        scene = "title"; progress = 0; pushAccumulated = 0; pushing = false; lastPushAt = 0; lastTapAt = 0; ignoredTapUntil = 0; poops = []; pushExpired = false; result = ""; sceneStartedAt = performance.now(); updateHint();
       }
       function point(event) {
         const rect = canvas.getBoundingClientRect();
@@ -635,11 +668,11 @@
       function frame(now) {
         if (scene === "eating" && now - sceneStartedAt >= 1000) {
           scene = "transition"; sceneStartedAt = now; sound("meow");
-        } else if (scene === "transition" && now - sceneStartedAt >= 3000) {
+        } else if (scene === "transition" && now - sceneStartedAt >= 4000) {
           sound("flush"); scene = "play"; sceneStartedAt = now; updateHint();
         }
         if (scene === "play") {
-          if (pushing) {
+          if (pushing && playMode === "hold") {
             const seconds = (pushAccumulated + now - pushStartedAt) / 1000;
             progress = Math.min(1, seconds / food.time * (7 / 12));
           } else if (playMode === "tap" && lastTapAt && now - lastTapAt >= 500) {
