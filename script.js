@@ -475,7 +475,7 @@
         drawMeter();
         const instruction = playMode === "hold"
           ? (pushing ? "WIGGLING — RELEASE TO STOP!" : "LONG PRESS: HOLD TO MOVE")
-          : "FAST PRESS: 3 CLICKS = 1 STEP";
+          : "FAST PRESS: EACH CLICK = 1 POOP";
         pixelText(instruction, 226, 231, 7, "#584638");
         const pressLabel = playMode === "hold"
           ? pushing ? "MOVING..." : "Long Press"
@@ -483,7 +483,7 @@
         button(buttons.push, pressLabel, pushing);
         const remaining = playStartedAt ? Math.max(0, 10 - (now - playStartedAt) / 1000) : 10;
         pixelText(`TIME ${remaining.toFixed(1)}s`, 63, 48, 9, "#bd3d50", "left", "#fff");
-        pixelText(playMode === "hold" ? "Hold to wiggle, release to stop." : `Clicks toward next step: ${fastPressCount % 3}/3`, 226, 294, 7, "#765a44");
+        pixelText(playMode === "hold" ? "Hold to wiggle, release to stop." : `One step every 3 clicks (${fastPressCount % 3}/3). No hold required.`, 226, 294, 7, "#765a44");
       }
       function drawBathroomTransition(now) {
         const elapsed = now - sceneStartedAt;
@@ -560,7 +560,7 @@
         else if (scene === "eating" || scene === "transition") hint.innerHTML = "Yum! Your angel cat is getting ready...";
         else if (scene === "play") hint.innerHTML = playMode === "hold"
           ? "Hold to make the poop wiggle continuously; release to stop. The run ends after 10 seconds."
-          : "Click or tap rapidly with no hold requirement. Every three presses advances one step; the run ends after 10 seconds.";
+          : "Every click or tap creates one poop immediately. No hold required; every three presses advances one step. The run ends after 10 seconds.";
         else if (scene === "result") hint.innerHTML = result === "success" ? "A sparkling success! Click Restart or press Space to play again." : "Try another food and find your rhythm. Click Restart or press Space.";
       }
       function finish(success) {
@@ -597,10 +597,10 @@
           pushing = false;
           fastPressCount++;
           lastTapAt = now;
+          dropPoop();
           sound("tap");
           if (fastPressCount % 3 === 0) {
             progress = Math.min(1, progress + .04);
-            dropPoop();
             if (progress >= meterZone().start && progress <= meterZone().end) finish(true);
             else if (progress > meterZone().end) finish(false);
           }
