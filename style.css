@@ -1,7 +1,7 @@
     :root {
       color-scheme: light;
       font-family: "Courier New", monospace;
-      background: #fff0a8;
+      background: #e7f4ff;
       color: #59402e;
     }
     * { box-sizing: border-box; }
@@ -12,8 +12,8 @@
       place-items: center;
       padding: 18px;
       background:
-        radial-gradient(circle at 1px 1px, #f8d879 1px, transparent 1.5px) 0 0 / 16px 16px,
-        #fff0a8;
+        radial-gradient(circle at 1px 1px, #c8e3f2 1px, transparent 1.5px) 0 0 / 16px 16px,
+        #e7f4ff;
     }
     main { width: min(100%, 980px); text-align: center; }
     h1 {
@@ -45,7 +45,7 @@
       touch-action: none;
     }
     #game {
-      background: #fff0b5;
+      background: #e7f4ff;
       image-rendering: pixelated;
       cursor: pointer;
     }

@@ -470,8 +470,7 @@
           pixelText("Pooping Time", 240, 125, 23, "#a96716", "center", "#fff");
           ctx.globalAlpha = 1;
         }
-        // Toilet water and the food-specific poop emerging from the top center
-        box(197, 181, 86, 8, "#8bd5e6");
+        // The food-specific poop emerges as the meter advances.
         poops.forEach(poop => drawPoop(poop.kind, poop.x, poop.y, poop.scale, 0));
         drawPoop(food.kind, 322, 39 + progress * 132, 1.35, Math.sin(now / 120) * (pushing ? 2 : 1));
         drawMeter();
@@ -507,12 +506,12 @@
       }
       function drawResultPoops() {
         if (!poops.length) return;
-        const columns = 8, rows = 6;
+        const columns = 12, rows = 10;
         for (let i = 0; i < columns * rows; i++) {
           const poop = poops[i % poops.length];
-          const x = 29 + (i % columns) * 60;
-          const y = 27 + Math.floor(i / columns) * 49;
-          drawPoop(poop.kind, x, y, Math.max(.45, poop.scale * .82), 0);
+          const x = 19 + (i % columns) * 40;
+          const y = 16 + Math.floor(i / columns) * 30;
+          drawPoop(poop.kind, x, y, Math.max(.8, poop.scale * 1.15), 0);
         }
       }
       function drawSuccess(now) {
@@ -528,8 +527,8 @@
       }
       function drawFail(now) {
         background("#dfeeff");
-        drawResultPoops();
         box(0, 0, W, 250, "#e8f4ff");
+        drawResultPoops();
         for (let i = 0; i < 7; i++) pixelText("〰", 70 + i * 57, 55 + Math.sin(now / 250 + i) * 9, 17, "#80a8da");
         cat(240, 168, 1.25, true, "frown");
         pixelText("OOPS!", 240, 224, 11, "#6792c5");
