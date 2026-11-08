@@ -407,7 +407,7 @@
         }
         ctx.restore();
       }
-      function drawMeter() {
+      function drawMeter(markerProgress = progress) {
         const x = 414, y = 65, h = 168, w = 28;
         const zone = meterZone();
         pixelText("PULL", x + w / 2, 50, 9, "#57433a");
@@ -419,7 +419,7 @@
         const target = (zone.start + zone.end) / 2;
         box(x - 7, y + h * target - 1, w + 14, 2, "#ff1744");
         pixelText("0.3kg", x + w / 2, y + h * target - 12, 8, "#ce3948");
-        const markerY = y + h * progress;
+        const markerY = y + h * markerProgress;
         box(x - 5, markerY - 4, w + 10, 8, "#fff", "#795034");
         pixelText("▲", x - 11, markerY, 9, "#795034");
       }
@@ -472,7 +472,6 @@
         }
         // The food-specific poop emerges as the meter advances.
         drawPoop(food.kind, 240, 39 + progress * 132, 1.35, pushing && playMode === "hold" ? Math.sin(now / 24) * 7 : 0);
-        drawMeter();
         const instruction = playMode === "hold"
           ? (pushing ? "WIGGLING — RELEASE TO STOP!" : "LONG PRESS: HOLD TO MOVE")
           : "FAST PRESS: EACH CLICK = 1 POOP";
@@ -483,7 +482,8 @@
         button(buttons.push, pressLabel, pushing);
         const remaining = playStartedAt ? Math.max(0, 10 - (now - playStartedAt) / 1000) : 10;
         pixelText(`TIME ${remaining.toFixed(1)}s`, 63, 48, 9, "#bd3d50", "left", "#fff");
-        pixelText(playMode === "hold" ? "Hold to wiggle, release to stop." : No hold required.`, 226, 294, 7, "#765a44");
+        pixelText(playMode === "hold" ? "Hold to wiggle, release to stop." : "No hold required.", 226, 294, 7, "#765a44");
+        drawMeter(playMode === "hold" && pushing ? longPressProgress(now) : progress);
       }
       function drawBathroomTransition(now) {
         const elapsed = now - sceneStartedAt;
@@ -572,6 +572,9 @@
         const zone = meterZone();
         finish(progress >= zone.start && progress <= zone.end);
       }
+      function longPressProgress(now) {
+        return .5 - .5 * Math.cos((now - pushStartedAt) * Math.PI / 1000);
+      }
       function dropPoop() {
         const index = poops.length;
         poops.push({
@@ -607,14 +610,12 @@
           return;
         }
         if (playMode === "hold") {
+          progress = longPressProgress(now);
           pushing = false;
-          fastPressCount++;
-          if (fastPressCount % 3 === 0) {
-            progress = Math.min(1, progress + .04);
-            dropPoop();
-            if (progress >= meterZone().start && progress <= meterZone().end) finish(true);
-            else if (progress > meterZone().end) finish(false);
-          }
+          dropPoop();
+          const zone = meterZone();
+          if (progress >= zone.start && progress <= zone.end) finish(true);
+          else if (progress > zone.end) finish(false);
           return;
         }
       }
@@ -678,7 +679,10 @@
           sound("flush"); scene = "play"; sceneStartedAt = now; playStartedAt = now; updateHint();
         }
         if (scene === "play" && !pushing && playMode === "tap" && lastTapAt && now - lastTapAt >= 500) settleProgress();
-        if (scene === "play" && playStartedAt && now - playStartedAt >= 10000) settleProgress();
+        if (scene === "play" && playStartedAt && now - playStartedAt >= 10000) {
+          if (pushing && playMode === "hold") progress = longPressProgress(now);
+          settleProgress();
+        }
         textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
         if (scene === "title") drawTitle(now);
         else if (scene === "food") drawFood(now);
