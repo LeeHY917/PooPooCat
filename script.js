@@ -540,7 +540,7 @@
         pixelText("Congratulations!", 240, 199, 21, "#a96716", "center", "#fff");
         pixelText("Perfect aim! The target is yours!", 240, 223, 9, "#6c543d", "center", "#fff");
         pixelText(`POOPS: ${poops.length}`, 240, 26, 10, "#59402e", "center", "#fff");
-        button(buttons.restart, "Restart!");
+        button(buttons.restart, "Press R");
       }
       function drawFail(now) {
         background("#dfeeff");
@@ -552,7 +552,7 @@
         pixelText("Fail", 240, 253, 23, "#6587b0", "center", "#fff");
         pixelText(progress < meterZone().start ? "Not quite enough!" : "Too much oomph!", 240, 276, 9, "#6783a2", "center", "#fff");
         pixelText(`POOPS: ${poops.length}`, 240, 26, 10, "#59402e", "center", "#fff");
-        button(buttons.restart, "Restart!");
+        button(buttons.restart, "Press R");
       }
       function updateHint() {
         if (scene === "title") hint.innerHTML = "Choose <strong>Long Press</strong> or <strong>Fast Press</strong>, then click Start or press <strong>Space</strong> · <strong>M</strong> toggles sound";
@@ -561,7 +561,7 @@
         else if (scene === "play") hint.innerHTML = playMode === "hold"
           ? "Hold to make the poop wiggle continuously; release to stop. The run ends after 10 seconds."
           : "Every click or tap creates one poop immediately. No hold required; every three presses advances one step. The run ends after 10 seconds.";
-        else if (scene === "result") hint.innerHTML = result === "success" ? "A sparkling success! Click Restart or press Space to play again." : "Try another food and find your rhythm. Click Restart or press Space.";
+        else if (scene === "result") hint.innerHTML = result === "success" ? "A sparkling success! Press <strong>R</strong> to restart." : "Try another food and press <strong>R</strong> to restart.";
       }
       function finish(success) {
         if (scene !== "play") return;
@@ -645,7 +645,6 @@
             else if (p.x >= 272 && p.x < 365) beginFood("dragon");
           } else if (p.x >= 202 && p.x <= 278 && p.y >= 157 && p.y <= 200) beginFood("rice");
         } else if (scene === "play" && inside(p, buttons.push)) startPush();
-        else if (scene === "result" && inside(p, buttons.restart)) restart();
       });
       canvas.addEventListener("pointerup", stopPush);
       canvas.addEventListener("pointercancel", stopPush);
@@ -660,11 +659,15 @@
           toggleSound();
           return;
         }
+        if (event.code === "KeyR" && !event.repeat && scene === "result") {
+          event.preventDefault();
+          restart();
+          return;
+        }
         if (event.code !== "Space" || event.repeat) return;
         event.preventDefault();
         if (scene === "title") { scene = "food"; sceneStartedAt = performance.now(); sound("tap"); updateHint(); }
         else if (scene === "play") startPush();
-        else if (scene === "result") restart();
       });
       window.addEventListener("keyup", event => { if (event.code === "Space") stopPush(); });
 
