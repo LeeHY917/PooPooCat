@@ -21,9 +21,9 @@ Open `index.html` in a browser. Use **P** or **space** to "Push!" or "Start!", a
    - Food choices affect the behavior, appearance, and difficulty of the pooping challenge
   
 3. Pooping Time
-   - Push using the touch on mobile, mouse pointer or Spacebar
-   - Progress meter moves according to the selected food
-   - Stop within the green target zone at 0.3kg to succeed
+   - Long Press: hold the control and release within the green target zone at 0.3kg to succeed
+   - Fast Press: every three clicks advances progress; stay in the green zone for 3 seconds to succeed
+   - The run ends after 10 seconds
    - Receive a success or fail result screen
 
 ## Controls
