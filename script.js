@@ -516,13 +516,14 @@
       }
       function drawResultPoops() {
         if (!poops.length) return;
-        const columns = 12, rows = 10;
+        const columns = Math.min(8, Math.ceil(Math.sqrt(poops.length * W / H)));
+        const rows = Math.ceil(poops.length / columns);
         ctx.save(); ctx.globalAlpha = .5;
-        for (let i = 0; i < columns * rows; i++) {
+        for (let i = 0; i < poops.length; i++) {
           const poop = poops[i % poops.length];
-          const x = 19 + (i % columns) * 40;
-          const y = 16 + Math.floor(i / columns) * 30;
-          drawPoop(poop.kind, x, y, Math.max(.8, poop.scale * 1.15), 0);
+          const x = columns > 1 ? 18 + (i % columns) * (444 / (columns - 1)) : 36;
+          const y = rows > 1 ? 16 + Math.floor(i / columns) * (264 / (rows - 1)) : 36;
+          drawPoop(poop.kind, x, y, Math.max(.55, poop.scale * .85), 0);
         }
         ctx.restore();
       }
@@ -539,9 +540,6 @@
         resultCat(116, 179, .75, false, "dance"); resultCat(364, 179, .75, false, "dance");
         pixelText("✦  POP!  ✦", 116, 118, 9, "#db8b44", "center", "#fff");
         pixelText("✦  POP!  ✦", 364, 118, 9, "#db8b44", "center", "#fff");
-        ctx.save(); ctx.globalAlpha = .5;
-        drawPoop(food.kind, 240, 138, 2.5, Math.sin(now / 100) * 2);
-        ctx.restore();
         pixelText("Congratulations!", 240, 199, 21, "#a96716", "center", "#fff");
         pixelText("Perfect aim! The target is yours!", 240, 223, 9, "#6c543d", "center", "#fff");
         pixelText(`POOPS: ${poops.length}`, 240, 26, 10, "#59402e", "center", "#fff");
@@ -675,7 +673,7 @@
           if (pushing && playMode === "hold") {
             const seconds = (pushAccumulated + now - pushStartedAt) / 1000;
             progress = Math.min(1, seconds / food.time * (7 / 12));
-          } else if (playMode === "tap" && lastTapAt && now - lastTapAt >= 500) {
+          } else if (!pushing && playMode === "tap" && lastTapAt && now - lastTapAt >= 500) {
             const zone = meterZone();
             finish(progress >= zone.start && progress <= zone.end);
           } else if (playMode === "hold" && lastPushAt && now - lastPushAt > 1000) {
