@@ -22,7 +22,8 @@ Open `index.html` in a browser. Use **P** or **space** to "Push!" or "Start!", a
   
 3. Pooping Time
    - Long Press: hold the control and release within the green target zone at 0.3kg to succeed
-   - Fast Press: every three clicks advances progress; stay in the green zone for 3 seconds to succeed
+   - Fast Press: every three clicks advances progress; stop in the green zone for 2 seconds to succeed
+   - Fast Press always fails when the 10-second timer expires
    - The run ends after 10 seconds
    - Receive a success or fail result screen
 

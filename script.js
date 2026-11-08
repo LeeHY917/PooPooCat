@@ -566,7 +566,7 @@
         else if (scene === "eating" || scene === "transition") hint.innerHTML = "Yum! Your angel cat is getting ready...";
         else if (scene === "play") hint.innerHTML = playMode === "hold"
           ? "Hold to make the poop wiggle continuously; release to stop. The run ends after 10 seconds."
-          : "Every click creates one poop; every three presses advances one step. Stay in the green zone for 3 seconds to win, or keep pressing to skip it. The run ends after 10 seconds.";
+          : "Every click creates one poop; every three presses advances one step. Stop in the green zone for 2 seconds to win. The run ends after 10 seconds.";
         else if (scene === "result") hint.innerHTML = result === "success" ? "A sparkling success! Press <strong>R</strong> to restart." : "Try another food and press <strong>R</strong> to restart.";
       }
       function finish(success) {
@@ -612,7 +612,8 @@
             progress = Math.min(1, progress + .04);
             const zone = meterZone();
             if (progress > zone.end) finish(false);
-            else if (progress >= zone.start && !fastPressZoneEnteredAt) fastPressZoneEnteredAt = now;
+            else if (progress >= zone.start) fastPressZoneEnteredAt = now;
+            else fastPressZoneEnteredAt = 0;
           }
           return;
         }
@@ -691,12 +692,10 @@
         }
         if (scene === "play" && playStartedAt && now - playStartedAt >= 10000) {
           if (pushing && playMode === "hold") progress = longPressProgress(now);
-          if (playMode === "tap") {
-            const zone = meterZone();
-            finish(progress >= zone.start && progress <= zone.end && fastPressZoneEnteredAt && now - fastPressZoneEnteredAt >= 3000);
-          } else settleProgress();
+          if (playMode === "tap") finish(false);
+          else settleProgress();
         }
-        if (scene === "play" && playMode === "tap" && fastPressZoneEnteredAt && now - fastPressZoneEnteredAt >= 3000) {
+        if (scene === "play" && playMode === "tap" && fastPressZoneEnteredAt && now - fastPressZoneEnteredAt >= 2000) {
           finish(true);
         }
         textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
